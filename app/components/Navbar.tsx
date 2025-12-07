@@ -7,7 +7,6 @@ import { IoArrowBack } from "react-icons/io5";
 
 export default function Navbar() {
   const pathname = usePathname();
-  // 判断：如果路径只有 "/"，那就是首页；否则就是二级页
   const isHomePage = pathname === '/';
 
   const homeLinks = [
@@ -29,7 +28,6 @@ export default function Navbar() {
   });
 
   const scrollToSection = (id: string) => {
-    // 如果在二级页点了菜单(虽然逻辑上应该不显示菜单)，强制回首页
     if (!isHomePage) {
       window.location.href = `/#${id}`;
       return;
@@ -49,41 +47,48 @@ export default function Navbar() {
       initial="visible"
       animate={hidden ? "hidden" : "visible"}
       transition={{ duration: 0.35, ease: "easeInOut" }}
-      className="fixed top-8 left-1/2 z-50 flex items-center gap-8 px-8 py-3 rounded-full bg-black/30 backdrop-blur-md border-2 border-white/20 text-white shadow-lg w-max"
+      // ⚡️ 修改点：统一固定在顶部 (top-6 或 top-8)
+      // 手机端：top-6 w-[90%] px-5 py-3 (稍微小一点，留边距)
+      // 电脑端：md:top-8 md:w-max md:px-8
+      className="fixed z-50 flex items-center justify-between md:justify-start gap-4 md:gap-8 
+                 top-6 md:top-8 
+                 left-1/2 -translate-x-1/2 
+                 w-[90%] md:w-max 
+                 px-5 py-3 md:px-8 md:py-3 
+                 rounded-full bg-black/60 backdrop-blur-xl border border-white/20 text-white shadow-2xl"
     >
-      {/* 左侧逻辑 */}
+      {/* 左侧：Logo 或 Back */}
       {isHomePage ? (
         <div 
-          className="text-lg font-black tracking-tighter cursor-pointer hover:text-purple-400 transition-colors" 
+          className="text-base md:text-lg font-black tracking-tighter cursor-pointer hover:text-purple-400 transition-colors" 
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth'})}
         >
           ANAN.
         </div>
       ) : (
-        // 二级页显示 BACK 按钮
-        <Link href="/#work" className="flex items-center gap-2 text-sm font-bold hover:text-purple-400 transition-colors">
-          <IoArrowBack size={16} />
+        <Link href="/#about" className="flex items-center gap-2 text-xs md:text-sm font-bold hover:text-purple-400 transition-colors">
+          <IoArrowBack size={14} />
           BACK
         </Link>
       )}
 
-      <div className="w-[1px] h-4 bg-white/20"></div>
+      {/* 分隔线 (手机端隐藏) */}
+      <div className="hidden md:block w-[1px] h-4 bg-white/20"></div>
 
-      {/* 右侧逻辑 */}
-      <div className="flex gap-6 text-xs md:text-sm font-bold tracking-widest">
+      {/* 右侧：菜单 */}
+      <div className="flex gap-4 md:gap-6 text-[10px] md:text-sm font-bold tracking-widest">
         {isHomePage ? (
           homeLinks.map((link) => (
             <div key={link.name} className="relative group overflow-hidden cursor-pointer px-2 py-1" onClick={() => scrollToSection(link.id)}>
-              <span className="absolute inset-0 bg-white/5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+              <span className="absolute inset-0 bg-white/5 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:block"></span>
               <span className="relative block z-10 group-hover:text-purple-300 transition-colors duration-300">
                 {link.name}
               </span>
             </div>
           ))
         ) : (
-          // 二级页显示标题
-          <div className="text-gray-400 cursor-default px-2 py-1">
-            ARCHIVE 2025
+          <div className="text-gray-400 cursor-default px-2 py-1 text-[10px] md:text-sm font-bold tracking-widest">
+            ARCHIVE
           </div>
         )}
       </div>

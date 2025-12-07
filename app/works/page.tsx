@@ -1,29 +1,42 @@
 'use client';
-import { useState, useEffect } from 'react'; // 引入 useEffect
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProjectModal from '../components/ProjectModal';
+import { MdArrowOutward } from "react-icons/md";
+import { client } from '@/sanity/lib/client';
+import { urlFor } from '@/sanity/lib/image';
 
 export default function WorksPage() {
-  const categories = ['ALL', 'CGI', '平面设计', 'CMF', '品牌官网', '展会', '周边'];
+  const [categories, setCategories] = useState(['ALL']);
   const [activeCategory, setActiveCategory] = useState('ALL');
   const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [allWorks, setAllWorks] = useState<any[]>([]);
 
-  // 确保进入二级页时，滚动到顶部 (解决从首页底部跳过来位置不对的问题)
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
 
-  const allWorks = [
-    { id: 1, title: 'PROJECT ALPHA', category: 'CGI', img: '/p1.png', year: '2023' },
-    { id: 2, title: 'NEON DREAMS',   category: '平面设计', img: '/p2.png', year: '2024' },
-    { id: 3, title: 'VOID SYSTEM',   category: '品牌官网', img: '/p3.png', year: '2023' },
-    { id: 4, title: 'CYBER LIFE',    category: '周边',     img: '/p4.png', year: '2024' },
-    { id: 5, title: 'FUTURE MOTO',   category: 'CMF',      img: '/p1.png', year: '2024' },
-    { id: 6, title: 'EXPO 2025',     category: '展会',     img: '/p2.png', year: '2023' },
-    { id: 7, title: 'GLASS UI',      category: '品牌官网', img: '/p3.png', year: '2024' },
-    { id: 8, title: 'MECHA SUIT',    category: 'CGI',      img: '/p4.png', year: '2023' },
-    { id: 9, title: 'POSTER ART',    category: '平面设计', img: '/p1.png', year: '2024' },
-  ];
+    const fetchData = async () => {
+      // 获取全部作品 (包括 showOnHome=false 的)，按 order 排序
+      const data = await client.fetch(`*[_type == "project"] | order(order desc) {
+        title, category, "img": mainImage, year, type, videoUrl, content
+      }`);
+
+      const formatted = data.map((item: any) => ({
+        ...item,
+        id: item.title,
+        img: item.img ? urlFor(item.img).url() : null,
+        video: item.videoUrl,
+        poster: item.img ? urlFor(item.img).url() : null,
+      }));
+
+      setAllWorks(formatted);
+
+      const uniqueCats = Array.from(new Set(formatted.map((i: any) => i.category))).filter(Boolean);
+      setCategories(['ALL', ...uniqueCats as string[]]);
+    };
+
+    fetchData();
+  }, []);
 
   const filteredWorks = activeCategory === 'ALL' ? allWorks : allWorks.filter(item => item.category === activeCategory);
 
@@ -32,9 +45,6 @@ export default function WorksPage() {
       
       <ProjectModal project={selectedProject || {}} isOpen={!!selectedProject} onClose={() => setSelectedProject(null)} />
       
-      {/* ❌ 删除了原来的 <header>...</header> ❌ */}
-      
-      {/* 头部留白，给悬浮导航栏腾位置 */}
       <div className="pt-40 px-4 md:px-12 max-w-[1800px] mx-auto">
         <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
           <h1 className="text-6xl md:text-8xl font-black uppercase tracking-tighter">
@@ -58,21 +68,21 @@ export default function WorksPage() {
         </div>
 
         <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-          <AnimatePresence>
-            {filteredWorks.map((item) => (
+          <AnimatePresence mode='popLayout'>
+            {filteredWorks.map((item, index) => (
               <motion.div
                 layout
                 key={item.id}
-                // 滚动渐显
-                initial={{ opacity: 0, scale: 0.9, y: 50 }} 
-                whileInView={{ opacity: 1, scale: 1, y: 0 }} 
-                viewport={{ once: true, margin: "-50px" }}
+                initial={{ opacity: 0, scale: 0.9 }} 
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1,
+                  transition: { delay: index * 0.05, duration: 0.4 } 
+                }} 
                 exit={{ opacity: 0, scale: 0.9 }} 
-                transition={{ duration: 0.5 }}
                 className="group cursor-pointer"
                 onClick={() => setSelectedProject(item)}
               >
-                {/* 简约交互：仅边框变白 + 亮度微升 */}
                 <div className="relative overflow-hidden aspect-[4/3] mb-4 bg-gray-900 border border-white/10 group-hover:border-white transition-colors duration-300">
                   <img 
                     src={item.img} 
@@ -80,9 +90,14 @@ export default function WorksPage() {
                     className="w-full h-full object-cover transition-all duration-500 group-hover:brightness-110 group-hover:scale-[1.02]" 
                   />
                 </div>
-                <div className="flex justify-between items-baseline">
-                  <h3 className="text-xl font-bold uppercase group-hover:text-purple-500 transition-colors">{item.title}</h3>
-                  <span className="text-xs text-gray-500 border border-gray-700 px-2 py-1 rounded">{item.category}</span>
+                <div className="flex justify-between items-end border-b border-white/30 pb-4">
+                  <div>
+                    <h3 className="text-xl font-bold uppercase group-hover:text-purple-500 transition-colors">{item.title}</h3>
+                    <span className="text-xs text-gray-500 border border-gray-700 px-2 py-1 rounded">{item.category}</span>
+                  </div>
+                  <div className="w-10 h-10 border border-white/30 rounded-full flex items-center justify-center text-white group-hover:bg-purple-600 group-hover:border-purple-600 group-hover:text-white transition-all duration-300 group-hover:rotate-45">
+                     <MdArrowOutward size={20} />
+                  </div>
                 </div>
               </motion.div>
             ))}

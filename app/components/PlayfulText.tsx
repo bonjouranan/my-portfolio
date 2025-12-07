@@ -21,34 +21,30 @@ export default function PlayfulText({ text, className, isHollow, delay = 0 }: { 
               <motion.span
                 key={j}
                 className={`inline-block cursor-default ${isHollow ? 'text-transparent' : 'text-white'}`}
-                style={isHollow ? { WebkitTextStroke: '2px white' } : {}}
+                style={{ 
+                  ...(isHollow ? { WebkitTextStroke: '2px white' } : {}),
+                  // ⚡️⚡️ 关键优化：开启 GPU 加速 ⚡️⚡️
+                  willChange: "transform, filter, color", 
+                  transform: "translateZ(0)" 
+                }}
                 
-                // 1. 初始状态
                 initial={{ opacity: 0, y: 40, filter: "blur(10px)", skewX: -20 }}
                 
-                // 2. 待机动画：幅度加大
                 animate={{ 
-                  opacity: 1, 
-                  skewX: 0, 
-                  scaleY: 1, 
-                  filter: "blur(0px)",
+                  opacity: 1, skewX: 0, scaleY: 1, filter: "blur(0px)",
                   textShadow: "0px 0px 0px transparent",
                   color: isHollow ? "transparent" : "#ffffff",
-                  // 修改点：大幅度跳动 + 微微旋转
                   y: [0, -15, 0], 
-                  rotate: [0, 5, 0], // 跳起来时歪一下
+                  rotate: [0, 5, 0], 
                 }}
                 
                 transition={{ 
-                  // 入场
                   opacity: { duration: 0.8, delay: delay + (i * 0.3) + (j * 0.05) },
                   filter: { duration: 0.8, delay: delay + (i * 0.3) + (j * 0.05) },
-                  
-                  // 待机循环
                   y: {
-                    duration: 0.8, // 动作稍微慢一点点，显得优雅
+                    duration: 0.8,
                     repeat: Infinity, 
-                    repeatDelay: 10,  // 每 10 秒循环一次 (稍微调快频次以便观察)
+                    repeatDelay: 10,
                     delay: delay + (i * 0.3) + (j * 0.05) + 2, 
                     ease: "easeInOut"
                   },
@@ -61,7 +57,6 @@ export default function PlayfulText({ text, className, isHollow, delay = 0 }: { 
                   }
                 }}
 
-                // 3. 悬浮交互
                 whileHover={{ 
                   skewX: -15,
                   scaleY: 1.2,
@@ -71,7 +66,7 @@ export default function PlayfulText({ text, className, isHollow, delay = 0 }: { 
                     "5px 0px 0px #ff0000, -5px 0px 0px #00ffff", 
                     "-5px 0px 0px #ff0000, 5px 0px 0px #00ffff",
                   ],
-                  y: 0, // 悬浮时停止跳动
+                  y: 0, 
                   rotate: 0,
                   transition: { duration: 0.4, ease: "easeInOut" }
                 }}

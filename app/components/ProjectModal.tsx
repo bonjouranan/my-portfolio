@@ -2,6 +2,57 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IoClose } from "react-icons/io5";
+import { PortableText } from '@portabletext/react';
+import { urlFor } from '@/sanity/lib/image';
+
+const ptComponents = {
+  marks: {
+    link: ({value, children}: any) => {
+      const target = (value?.href || '').startsWith('http') ? '_blank' : undefined
+      return <a href={value?.href} target={target} rel="noopener noreferrer" className="text-purple-400 underline font-bold">{children}</a>
+    },
+    textColor: ({value, children}: any) => <span style={{ color: value?.hex }}>{children}</span>
+  },
+  
+  types: {
+    image: ({ value }: any) => {
+      if (!value?.asset?._ref) return null;
+      const spacing = value.spacing !== undefined ? value.spacing : 32;
+      return (
+        <div style={{ marginBottom: `${spacing}px`, marginTop: `${spacing}px` }}>
+          <img alt={value.alt || ''} loading="lazy" src={urlFor(value).url()} className="w-full rounded-none block" />
+          {value.caption && <p className="text-center text-sm text-gray-500 mt-2 italic">{value.caption}</p>}
+        </div>
+      );
+    },
+    
+    // 🔥 修复：改回原生 video 标签，不再用 ReactPlayer
+       videoEmbed: ({ value }: any) => {
+      if (!value?.url) return null;
+      return (
+        <div className="my-12 w-full bg-black">
+          <video 
+            src={value.url}
+            controls 
+            className="w-full h-auto block"
+            // 👇👇👇 把这一行加进去 👇👇👇
+            autoPlay muted loop playsInline
+          />
+          {value.caption && <p className="text-center text-sm text-gray-500 mt-2 italic">{value.caption}</p>}
+        </div>
+      );
+    }
+
+  },
+  
+  block: {
+    normal: ({children}: any) => <p className="mb-6 leading-relaxed text-gray-300">{children}</p>,
+    h1: ({children}: any) => <h1 className="text-4xl font-black text-white mt-16 mb-8">{children}</h1>,
+    h2: ({children}: any) => <h2 className="text-3xl font-bold text-white mt-12 mb-6">{children}</h2>,
+    h3: ({children}: any) => <h3 className="text-2xl font-bold text-purple-400 mt-10 mb-4">{children}</h3>,
+    blockquote: ({children}: any) => <blockquote className="border-l-4 border-purple-500 pl-4 italic text-gray-400 my-8 bg-white/5 p-4 rounded-r">{children}</blockquote>,
+  }
+};
 
 export default function ProjectModal({ project, isOpen, onClose }: { project: any, isOpen: boolean, onClose: () => void }) {
   
@@ -14,46 +65,38 @@ export default function ProjectModal({ project, isOpen, onClose }: { project: an
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* 1. 关闭按钮：完全独立于滚动容器，Fixed定位 */}
-          <motion.button 
-            initial={{ opacity: 0, scale: 0 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}
+        <motion.div 
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl cursor-auto"
+        >
+          <button 
             onClick={onClose} 
-            className="fixed top-6 right-6 md:top-10 md:right-10 text-white z-[9999] p-3 border border-white/20 rounded-full bg-black/80 hover:bg-white hover:text-black transition-colors backdrop-blur-md cursor-pointer"
+            className="fixed top-6 right-6 md:top-10 md:right-10 text-white z-[110] p-3 border border-white/20 rounded-full bg-black/50 hover:bg-white hover:text-black transition-colors backdrop-blur-md"
           >
             <IoClose size={32} />
-          </motion.button>
+          </button>
 
-          {/* 2. 滚动容器 */}
           <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl overflow-y-auto no-scrollbar"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
+            className="fixed inset-0 overflow-y-auto no-scrollbar"
           >
-            <div className="max-w-6xl mx-auto px-4 py-32">
-               <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="text-center mb-16">
-                  <p className="text-purple-400 font-bold tracking-[0.2em] mb-4 text-lg">{project.category} — {project.year}</p>
-                  <h1 className="text-5xl md:text-8xl font-black uppercase leading-none">{project.title}</h1>
-               </motion.div>
-
-               {/* 静态展示，无悬浮交互 */}
-               <motion.img initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.3 }}
-                 src={project.img} className="w-full mb-20 shadow-2xl shadow-purple-900/20 rounded-sm" 
-               />
-
-               {/* 多图展示测试 (静态) */}
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-20">
-                  <img src={project.img} className="w-full aspect-video object-cover" />
-                  <img src={project.img} className="w-full aspect-video object-cover" />
-                  <img src={project.img} className="w-full aspect-square object-cover md:col-span-2" />
+            <div className="w-full max-w-5xl mx-auto px-4 md:px-8 pb-32">
+               
+               <div className="pt-32 pb-12 text-center border-b border-white/10 mb-12">
+                  <p className="text-purple-400 font-bold tracking-[0.2em] mb-4 text-lg uppercase">{project.category} — {project.year}</p>
+                  <h1 className="text-4xl md:text-7xl font-black uppercase leading-tight">{project.title}</h1>
                </div>
 
-               <div className="max-w-3xl mx-auto text-gray-300 leading-relaxed text-lg space-y-8 mb-32">
-                 <h3 className="text-3xl font-bold text-white">Concept</h3>
-                 <p>This project explores the visual boundary between digital noise and meaningful signal.</p>
-               </div>
+               {project.content ? (
+                 <div className="prose prose-invert prose-lg max-w-none text-center">
+                   <PortableText value={project.content} components={ptComponents} />
+                 </div>
+               ) : (
+                 <div className="text-center text-gray-500 py-20">No content details yet.</div>
+               )}
             </div>
           </motion.div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

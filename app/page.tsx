@@ -1,214 +1,227 @@
 'use client';
-import { useState, useRef, useEffect } from 'react'; // 引入 useEffect
-import { motion } from 'framer-motion';
+import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import ParticleScene from './components/ParticleScene';
 import PlayfulText from './components/PlayfulText';
 import ProjectModal from './components/ProjectModal';
-import { FaBehance, FaBilibili, FaPlay, FaPause } from "react-icons/fa6";
+import { FaBehance, FaBilibili, FaPlay, FaPause, FaWeixin } from "react-icons/fa6";
 import { SiXiaohongshu, SiGmail } from "react-icons/si";
-import { IoArrowDown } from "react-icons/io5";
+import { IoArrowDown, IoClose } from "react-icons/io5";
+import { MdArrowOutward } from "react-icons/md";
+import { client } from '@/sanity/lib/client';
+import { urlFor } from '@/sanity/lib/image';
 
 export default function Home() {
   const [selectedProject, setSelectedProject] = useState<any>(null);
-  
-  // 状态：是否跳过开场动画
   const [skipIntro, setSkipIntro] = useState(false);
+  const [showWechat, setShowWechat] = useState(false); 
+  
+  const [allProjects, setAllProjects] = useState<any[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+  const [heroConfig, setHeroConfig] = useState<any>(null); // 新增 Hero 状态
 
   useEffect(() => {
-    // 检查 URL 是否包含 hash (例如 #work)
     if (window.location.hash) {
-      setSkipIntro(true); // 如果有锚点，说明是返回回来的，跳过动画
+      setSkipIntro(true);
     }
+
+    const fetchData = async () => {
+      const projectsData = await client.fetch(`*[_type == "project" && showOnHome == true] | order(order asc) {
+        title, category, "img": mainImage, year, type, videoUrl, content
+      }`);
+      
+      const profileData = await client.fetch(`*[_type == "profile"][0] {
+        name, role, about, skills, socials, subHeadline
+      }`);
+
+      const heroData = await client.fetch(`*[_type == "hero"][0] {
+        topSmallText, line1, line2, heroStyle
+      }`);
+
+      const formattedProjects = projectsData.map((item: any) => ({
+        ...item,
+        img: item.img ? urlFor(item.img).url() : null,
+        video: item.videoUrl,
+        poster: item.img ? urlFor(item.img).url() : null,
+      }));
+
+      setAllProjects(formattedProjects);
+      setProfile(profileData);
+      setHeroConfig(heroData);
+    };
+
+    fetchData();
   }, []);
 
-  const allProjects = [
-    { type: 'video', title: 'VIDEO TEST', category: '动态演示', video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4', poster: '/p1.png', year: '2024' },
-    { type: 'image', title: 'GLITCH GIF', category: 'GIF 实验', img: 'https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZzZ6NHZ6NHZ6NHZ6NHZ6NHZ6NHZ6NHZ6/3o7qE1YN7aQSOxvjwA/giphy.gif', year: '2023' },
-    { type: 'image', title: 'VOID SYSTEM',   category: '品牌官网', img: '/p3.png', year: '2023' },
-    { type: 'image', title: 'CYBER LIFE',    category: '周边',     img: '/p4.png', year: '2024' },
-    { type: 'image', title: 'FUTURE MOTO',   category: 'CMF',      img: '/p1.png', year: '2024' },
-    { type: 'image', title: 'DATA VISUAL',   category: '展会',     img: '/p2.png', year: '2023' },
-    { type: 'image', title: 'GLASS UI',      category: '品牌官网', img: '/p3.png', year: '2024' },
-    { type: 'image', title: 'MECHANIC',      category: 'CGI',      img: '/p4.png', year: '2023' },
-  ];
-
   const [visibleCount, setVisibleCount] = useState(4);
-  const visibleProjects = allProjects.slice(0, visibleCount);
-
-  // 动态计算延迟：如果跳过，延迟为 0；否则为 2.5s
+  // 首页死限 8 个
+  const visibleProjects = allProjects.slice(0, Math.min(visibleCount, 8));
   const START_DELAY = skipIntro ? 0 : 2.5; 
+  const wechatQrUrl = profile?.socials?.wechatQr ? urlFor(profile.socials.wechatQr).url() : null;
 
   return (
     <main className="bg-black min-h-screen text-white overflow-x-hidden selection:bg-purple-500 selection:text-white">
       
+      {wechatQrUrl && <img src={wechatQrUrl} alt="preload" className="hidden" />}
+
       <ProjectModal project={selectedProject || {}} isOpen={!!selectedProject} onClose={() => setSelectedProject(null)} />
 
-      {/* 1. Hero 区域 */}
+      <AnimatePresence>
+        {showWechat && wechatQrUrl && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl cursor-auto"
+            onClick={() => setShowWechat(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+              className="relative bg-neutral-900 p-12 rounded-2xl border border-white/10 flex flex-col items-center shadow-2xl max-w-md mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button onClick={() => setShowWechat(false)} className="absolute top-4 right-4 p-2 text-gray-500 hover:text-white transition-colors">
+                <IoClose size={24} />
+              </button>
+              <h3 className="text-2xl font-black mb-8 text-purple-400 tracking-widest">SCAN TO CHAT</h3>
+              <div className="p-2 bg-white rounded-xl">
+                 <img src={wechatQrUrl} alt="Wechat QR" className="w-64 h-64 object-contain" />
+              </div>
+              <p className="text-sm text-gray-500 tracking-widest mt-6 uppercase">ID: {profile?.name || 'ANAN'}</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 1. Hero */}
       <section className="h-screen w-full relative flex flex-col items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-20 pointer-events-none"></div>
-        
         <div className="relative z-20 text-center pointer-events-auto mix-blend-difference">
-          <motion.div 
-            initial={{ scaleX: 0 }} 
-            animate={{ scaleX: 1 }} 
-            transition={{ delay: START_DELAY + 0.2, duration: 1, ease: "circOut" }}
-            className="h-[1px] w-24 bg-gray-600 mx-auto mb-6 origin-center"
-            whileHover={{ width: 100, height: 2, background: "linear-gradient(90deg, #ff0000, #00ff00, #0000ff)" }}
-          ></motion.div>
-
-          <motion.p 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
-            transition={{ delay: START_DELAY + 1 }} 
-            className="text-sm md:text-base tracking-[0.5em] mb-4 text-gray-400"
-          >
-            PORTFOLIO 2025
+          <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: START_DELAY + 0.2, duration: 1, ease: "circOut" }} className="h-[1px] w-24 bg-gray-600 mx-auto mb-6 origin-center" whileHover={{ width: 100, height: 2, background: "linear-gradient(90deg, #ff0000, #00ff00, #0000ff)" }}></motion.div>
+          
+          {/* 动态小字 */}
+          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: START_DELAY + 1 }} className="text-sm md:text-base tracking-[0.5em] mb-4 text-gray-400">
+            {heroConfig?.topSmallText || "LOADING..."}
           </motion.p>
           
+          {/* 动态标题 */}
           <div className="text-[10vw] leading-[0.9] font-black tracking-tighter cursor-default flex flex-col items-center">
-            <PlayfulText text="Anan's" delay={START_DELAY + 0.2} />
-            <PlayfulText text="PORTFOLIO" isHollow={true} delay={START_DELAY + 0.6} />
+            <PlayfulText text={heroConfig?.line1 || "DIGITAL"} delay={START_DELAY + 0.2} />
+            <PlayfulText 
+              text={heroConfig?.line2 || "CRAFTER"} 
+              isHollow={heroConfig?.heroStyle === 'hollow'} 
+              delay={START_DELAY + 0.6} 
+            />
           </div>
-
-          <motion.div 
-            initial={{ scaleX: 0 }} 
-            animate={{ scaleX: 1 }} 
-            transition={{ delay: START_DELAY + 0.2, duration: 1, ease: "circOut" }}
-            className="h-[1px] w-24 bg-gray-600 mx-auto mt-6 origin-center"
-            whileHover={{ width: 100, height: 2, background: "linear-gradient(90deg, #00ffff, #ff00ff, #ffff00)" }}
-          ></motion.div>
+          <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: START_DELAY + 0.2, duration: 1, ease: "circOut" }} className="h-[1px] w-24 bg-gray-600 mx-auto mt-6 origin-center" whileHover={{ width: 100, height: 2, background: "linear-gradient(90deg, #00ffff, #ff00ff, #ffff00)" }}></motion.div>
         </div>
-        
         <div className="absolute inset-0 z-0 opacity-80"><ParticleScene /></div>
         <div className="absolute bottom-0 left-0 w-full h-[40vh] bg-gradient-to-t from-black via-black/80 to-transparent z-10 pointer-events-none"></div>
-        
-        <motion.div 
-          initial={{ opacity: 0 }} 
-          animate={{ opacity: 1 }} 
-          transition={{ delay: START_DELAY + 1.5 }} 
-          className="absolute bottom-12 flex flex-col items-center gap-2 text-xs tracking-widest animate-bounce z-20"
-        >
-          <span>SCROLL TO EXPLORE</span>
-          <IoArrowDown size={20} />
-        </motion.div>
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: START_DELAY + 1.5 }} className="absolute bottom-12 flex flex-col items-center gap-2 text-xs tracking-widest animate-bounce z-20"><span>SCROLL TO EXPLORE</span><IoArrowDown size={20} /></motion.div>
       </section>
 
       {/* 2. Selected Works */}
-      {/* id="work" 锚点在这里 */}
       <section id="work" className="py-32 px-4 md:px-12 max-w-[1600px] mx-auto z-20 relative">
-        <FadeIn delay={skipIntro ? 0 : 0}> {/* 如果跳过，这里也不延迟 */}
+        <FadeIn forceShow={skipIntro}>
           <div className="flex items-end justify-between mb-24 border-b border-white/20 pb-4">
             <h2 className="text-4xl font-bold">SELECTED WORKS</h2>
-            <span className="text-sm text-gray-400">({visibleCount} / {allProjects.length})</span>
+            <span className="text-sm text-gray-400">({visibleCount} / {Math.min(allProjects.length, 8)})</span>
           </div>
         </FadeIn>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-32">
-          <div className="flex flex-col gap-24 md:gap-48">
-            {visibleProjects.filter((_, i) => i % 2 === 0).map((item, index) => (
-               <FadeIn key={index} delay={skipIntro ? 0 : index * 0.1}>
-                 <ProjectCard item={item} onClick={() => setSelectedProject(item)} />
-               </FadeIn>
-            ))}
+        {allProjects.length === 0 ? (
+          <div className="text-center py-20 text-gray-500 animate-pulse">Loading selected projects...</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-32">
+            <div className="flex flex-col gap-24 md:gap-48">
+              {visibleProjects.filter((_, i) => i % 2 === 0).map((item, index) => (
+                 <FadeIn key={index} delay={index * 0.1} forceShow={skipIntro}><ProjectCard item={item} onClick={() => setSelectedProject(item)} /></FadeIn>
+              ))}
+            </div>
+            <div className="flex flex-col gap-24 md:gap-48 md:pt-48">
+              {visibleProjects.filter((_, i) => i % 2 !== 0).map((item, index) => (
+                 <FadeIn key={index} delay={index * 0.1} forceShow={skipIntro}><ProjectCard item={item} onClick={() => setSelectedProject(item)} /></FadeIn>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-col gap-24 md:gap-48 md:pt-48">
-            {visibleProjects.filter((_, i) => i % 2 !== 0).map((item, index) => (
-               <FadeIn key={index} delay={skipIntro ? 0 : index * 0.1}>
-                 <ProjectCard item={item} onClick={() => setSelectedProject(item)} />
-               </FadeIn>
-            ))}
-          </div>
-        </div>
+        )}
 
-        <FadeIn>
+        <FadeIn forceShow={skipIntro}>
           <div className="mt-32 flex flex-col items-center justify-center gap-6 w-full max-w-md mx-auto">
-              {visibleCount < allProjects.length && (
-                <button 
-                  onClick={() => setVisibleCount(prev => prev + 4)}
-                  className="w-full px-12 py-4 bg-white text-black hover:bg-purple-500 hover:text-white transition-all uppercase tracking-widest text-sm font-bold"
-                >
-                  Load More Work
-                </button>
+              {/* Load More 只在数量少于8且还有剩余作品时显示 */}
+              {visibleCount < allProjects.length && visibleCount < 8 && (
+                <button onClick={() => setVisibleCount(prev => Math.min(prev + 4, 8))} className="w-full px-12 py-4 bg-white text-black hover:bg-purple-500 hover:text-white transition-all uppercase tracking-widest text-sm font-bold">Load More Work</button>
               )}
-              <Link href="/works" className="w-full">
-                <button className="w-full px-12 py-4 bg-white text-black hover:bg-purple-500 hover:text-white transition-all uppercase tracking-widest text-sm font-bold">
-                   View All Archive
-                </button>
-              </Link>
+              <Link href="/works" className="w-full"><button className="w-full px-12 py-4 bg-white text-black hover:bg-purple-500 hover:text-white transition-all uppercase tracking-widest text-sm font-bold">View All Archive</button></Link>
           </div>
         </FadeIn>
       </section>
 
       {/* 3. About Me */}
       <section id="about" className="py-32 px-4 md:px-12 max-w-4xl mx-auto z-20 relative text-center">
-        <FadeIn>
-          <p className="text-purple-400 font-bold tracking-widest mb-8">WHO IS ANAN?</p>
+        <FadeIn forceShow={skipIntro}>
+          <p className="text-purple-400 font-bold tracking-widest mb-8">
+            {profile?.subHeadline || "WHO IS ANAN?"}
+          </p>
           <h2 className="text-4xl md:text-6xl font-bold leading-tight mb-12">
-            I'm Anan, a digital designer crafting meaningful experiences.
+            <span className="block mb-2">{profile?.name || "Loading..."}</span>
+            <span className="block text-gray-400">{profile?.role || "Loading..."}</span>
           </h2>
-          <p className="text-xl text-gray-400 leading-relaxed mb-12">
-            With a background in both visual design and creative coding, I bridge the gap between aesthetics and functionality. 
-            I believe that great design should not only look good but also feel alive.
+          <p className="text-xl text-gray-400 leading-relaxed mb-12 whitespace-pre-wrap">
+            {profile?.about || "Loading bio..."}
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            {['UI/UX', 'CGI', 'WebGL', 'Branding', 'Motion'].map(skill => (
-              <span key={skill} className="px-6 py-2 border border-white/20 rounded-full text-sm hover:bg-white hover:text-black transition-colors cursor-default">
-                {skill}
-              </span>
+            {profile?.skills?.map((skill: string) => (
+              <span key={skill} className="px-6 py-2 border border-white/20 rounded-full text-sm hover:bg-white hover:text-black transition-colors cursor-default">{skill}</span>
             ))}
           </div>
         </FadeIn>
       </section>
 
       {/* 4. Contact */}
-      <section id="contact" className="h-[60vh] flex flex-col items-center justify-center bg-neutral-900 border-t border-white/10 mt-20 relative">
-        <FadeIn>
+      <section id="contact" className="h-[50vh] flex flex-col items-center justify-center bg-neutral-900 border-t border-white/10 mt-20 relative">
+        <FadeIn forceShow={skipIntro}>
           <div className="flex flex-col items-center">
-            <p className="text-purple-400 tracking-widest mb-8">GOT A PROJECT?</p>
-            <h2 className="text-[6vw] font-black hover:text-purple-500 transition-colors cursor-pointer leading-none">
-              LET'S TALK
-            </h2>
-            <div className="flex gap-8 mt-12">
-              <SocialIcon href="mailto:hello@alex.design" icon={<SiGmail size={20} />} label="Email" />
-              <SocialIcon href="https://www.xiaohongshu.com" icon={<SiXiaohongshu size={20} />} label="小红书" />
-              <SocialIcon href="https://www.bilibili.com" icon={<FaBilibili size={20} />} label="Bilibili" />
-              <SocialIcon href="https://www.behance.net/Anannn" icon={<FaBehance size={20} />} label="Behance" />
+            <h2 className="text-[6vw] font-black leading-none mb-16 text-white cursor-default">MORE INFO</h2>
+            <div className="flex gap-8 md:gap-16">
+              
+              {wechatQrUrl && (
+                <button onClick={() => setShowWechat(true)} className="group flex flex-col items-center gap-3">
+                  <div className="relative p-5 border border-white/20 rounded-full bg-black group-hover:scale-110 group-hover:border-[#07c160] group-hover:text-[#07c160] transition-all duration-300">
+                    <div className="absolute inset-0 rounded-full bg-[#07c160] blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300"></div>
+                    <FaWeixin size={28} className="relative z-10" />
+                  </div>
+                  <span className="text-[10px] tracking-widest text-gray-500 uppercase group-hover:text-white transition-colors">Wechat</span>
+                </button>
+              )}
+
+              {profile?.socials?.behance && <SocialIcon href={profile.socials.behance} icon={<FaBehance size={28} />} label="Behance" hoverColor="#1769ff" />}
+              {profile?.socials?.xiaohongshu && <SocialIcon href={profile.socials.xiaohongshu} icon={<SiXiaohongshu size={28} />} label="Red" hoverColor="#ff2442" />}
+              {profile?.socials?.bilibili && <SocialIcon href={profile.socials.bilibili} icon={<FaBilibili size={28} />} label="Bilibili" hoverColor="#fb7299" />}
+              {profile?.socials?.email && <SocialIcon href={`mailto:${profile.socials.email}`} icon={<SiGmail size={28} />} label="Email" hoverColor="#ffffff" />}
             </div>
           </div>
         </FadeIn>
         <div className="absolute bottom-8 flex w-full justify-between px-8 text-xs text-gray-600 uppercase">
-           <span>© 2025 Anan Design</span>
+           <span>© 2025 {profile?.name || 'ANAN'} Design</span>
         </div>
       </section>
     </main>
   );
 }
 
-function FadeIn({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 0.8, ease: "easeOut", delay }}
-    >
-      {children}
-    </motion.div>
-  );
+function FadeIn({ children, delay = 0, forceShow = false }: { children: React.ReactNode, delay?: number, forceShow?: boolean }) {
+  if (forceShow) return <div className="opacity-100">{children}</div>;
+  return <motion.div initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-50px" }} transition={{ duration: 0.8, ease: "easeOut", delay }}>{children}</motion.div>;
 }
 
-function SocialIcon({ href, icon, label }: any) {
+function SocialIcon({ href, icon, label, hoverColor }: any) {
   return (
-    <a 
-      href={href} 
-      target="_blank" 
-      rel="noopener noreferrer" 
-      className="group flex flex-col items-center gap-2 text-gray-400 hover:text-white transition-colors"
-    >
-      <div className="p-3 border border-white/20 rounded-full group-hover:bg-white group-hover:text-black transition-all duration-300">
-        {icon}
+    <a href={href} target="_blank" rel="noopener noreferrer" className="group flex flex-col items-center gap-3">
+      <div className="relative p-5 border border-white/20 rounded-full bg-black group-hover:scale-110 transition-all duration-300" style={{ color: 'white' }} onMouseEnter={(e) => { e.currentTarget.style.borderColor = hoverColor; e.currentTarget.style.color = hoverColor; }} onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; e.currentTarget.style.color = 'white'; }}>
+        <div className="absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300" style={{ backgroundColor: hoverColor }}></div>
+        <div className="relative z-10">{icon}</div>
       </div>
+      <span className="text-[10px] tracking-widest text-gray-500 uppercase group-hover:text-white transition-colors">{label}</span>
     </a>
   );
 }
@@ -216,64 +229,39 @@ function SocialIcon({ href, icon, label }: any) {
 function ProjectCard({ item, onClick }: { item: any, onClick: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
-
   const togglePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
+      if (isPlaying) { videoRef.current.pause(); } else { videoRef.current.play(); }
       setIsPlaying(!isPlaying);
     }
   };
-
   return (
-    <motion.div 
-      className="group cursor-pointer relative"
-      onClick={onClick}
-    >
+    <motion.div className="group cursor-pointer relative" onClick={onClick}>
       <div className="relative mb-6">
-        {/* 故障风背景 */}
-        <div className="absolute inset-0 bg-[#ff0055] scale-100 translate-x-0 translate-y-0 group-hover:-translate-x-2 group-hover:-translate-y-2 transition-transform duration-200 z-0 opacity-0 group-hover:opacity-80 mix-blend-screen"></div>
-        <div className="absolute inset-0 bg-[#00fff2] scale-100 translate-x-0 translate-y-0 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform duration-200 z-0 opacity-0 group-hover:opacity-80 mix-blend-screen"></div>
-
-        {/* 主容器 */}
+        <div className="absolute inset-0 bg-[#ff0055] scale-100 translate-x-0 translate-y-0 group-hover:-translate-x-2 group-hover:-translate-y-2 transition-transform duration-200 z-0 opacity-0 group-hover:opacity-80 mix-blend-screen blur-md"></div>
+        <div className="absolute inset-0 bg-[#00fff2] scale-100 translate-x-0 translate-y-0 group-hover:translate-x-2 group-hover:translate-y-2 transition-transform duration-200 z-0 opacity-0 group-hover:opacity-80 mix-blend-screen blur-md"></div>
         <div className="relative z-10 overflow-hidden aspect-[3/4] bg-gray-900 rounded-none border border-transparent group-hover:border-white transition-colors duration-300">
-          
           {item.type === 'video' ? (
             <>
-              <video
-                ref={videoRef}
-                src={item.video}
-                poster={item.poster}
-                autoPlay muted loop playsInline
-                className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
-              />
-              <button 
-                onClick={togglePlay}
-                className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-600 hover:border-purple-600 z-20"
-              >
+              <video ref={videoRef} src={item.video} poster={item.poster} autoPlay muted loop playsInline className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105" />
+              <button onClick={togglePlay} className="absolute bottom-4 right-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-600 hover:border-purple-600 z-20">
                 {isPlaying ? <FaPause size={12} /> : <FaPlay size={12} />}
               </button>
             </>
           ) : (
-            <motion.img 
-              src={item.img} 
-              alt={item.title} 
-              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105 group-hover:brightness-110"
-            />
+            <motion.img src={item.img} alt={item.title} className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105 group-hover:brightness-110" />
           )}
-
           <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-500 pointer-events-none"></div>
         </div>
       </div>
-      
       <div className="flex justify-between items-end border-b border-white/30 pb-4">
         <div>
            <p className="text-purple-400 text-sm font-bold uppercase tracking-widest mb-1">{item.category}</p>
            <h3 className="text-3xl font-black uppercase italic group-hover:translate-x-2 transition-transform duration-300">{item.title}</h3>
+        </div>
+        <div className="w-12 h-12 border border-white/30 rounded-full flex items-center justify-center text-white group-hover:bg-purple-600 group-hover:border-purple-600 group-hover:text-white transition-all duration-300 group-hover:rotate-45">
+           <MdArrowOutward size={24} />
         </div>
       </div>
     </motion.div>

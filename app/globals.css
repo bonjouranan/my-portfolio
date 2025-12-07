@@ -21,3 +21,23 @@
 }
 
 body.no-scroll { overflow: hidden; }
+/* 滚动锚点偏移 (防止被导航栏遮挡) */
+html {
+  scroll-padding-top: 120px; /* 根据导航栏高度调整 */
+}
+/* ...之前的代码... */
+
+/* 强制给后台页面恢复鼠标 */
+body:has(div[id="sanity"]) {
+  cursor: auto !important;
+}
+
+/* 或者更粗暴一点：只要路径包含 studio 的时候，body 就会有 cursor-auto 类 */
+.cursor-auto {
+  cursor: auto !important;
+}
+
+/* 确保后台里的所有元素都能看到鼠标 */
+.cursor-auto * {
+  cursor: auto !important;
+}
