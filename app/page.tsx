@@ -150,7 +150,7 @@ export default function Home() {
           </div>
           
           {/* 大标题：保留特效 */}
-          <div className="text-[10vw] leading-[0.9] font-black tracking-tighter cursor-default flex flex-col items-center">
+          <div className="text-[14vw] md:text-[10vw] leading-[0.9] font-black tracking-tighter cursor-default flex flex-col items-center">
             <PlayfulText text={heroConfig?.line1 || "ANAN’S"} delay={START_DELAY + 0.2} isTitle={true} />
             <PlayfulText 
               text={heroConfig?.line2 || "Portfolio"} 
