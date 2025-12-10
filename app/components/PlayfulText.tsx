@@ -141,7 +141,7 @@ export default function PlayfulText({ text, className, isHollow, isTitle = true,
                 whileHover={{ 
                   skewX: isTitle ? -15 : 0, 
                   scaleY: isTitle ? 1.2 : 1, 
-                  WebkitTextStrokeColor: isHollow ? "white" : undefined,
+                  ["WebkitTextStrokeColor" as any]: isHollow ? "white" : undefined, // <--- 加上中括号和 as any
                   color: currentColor, 
                   textShadow: isTitle ? "5px 2px 0px #ff0000, -5px -2px 0px #00ffff" : "none",
                   // ⚡️ 悬浮时暂停跳动 (y=0)，移开后自动恢复 animate 里的循环 ⚡️
