@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react'; // 👈 记得引入 useEffect
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -27,14 +28,37 @@ export default function Navbar() {
     }
   });
 
+  // ⚡️ 增强版：处理从外部页面跳回来的定位问题 (例如 works -> home#about)
+  useEffect(() => {
+    // 只有在首页且 URL 带有 #hash 时才触发
+    if (isHomePage && window.location.hash) {
+      const id = window.location.hash.replace('#', '');
+      const element = document.getElementById(id);
+      
+      if (element) {
+        // 延时 500ms：确保移动端图片/布局完全加载后再滚动
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 500);
+      }
+    }
+  }, [isHomePage]); // 只在“是否是首页”变化时触发一次
+
   const scrollToSection = (id: string) => {
     if (!isHomePage) {
       window.location.href = `/#${id}`;
       return;
     }
+
     const element = document.getElementById(id);
     if (element) {
+      // 1. 立即滚一次 (让用户觉得反应很快)
       element.scrollIntoView({ behavior: 'smooth' });
+      
+      // 2. 延时 300ms 再滚一次 (作为“修正”，防止移动端高度没撑开滚错位置)
+      setTimeout(() => {
+         element.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
     }
   };
 
@@ -47,9 +71,6 @@ export default function Navbar() {
       initial="visible"
       animate={hidden ? "hidden" : "visible"}
       transition={{ duration: 0.35, ease: "easeInOut" }}
-      // ⚡️ 修改点：统一固定在顶部 (top-6 或 top-8)
-      // 手机端：top-6 w-[90%] px-5 py-3 (稍微小一点，留边距)
-      // 电脑端：md:top-8 md:w-max md:px-8
       className="fixed z-50 flex items-center justify-between md:justify-start gap-4 md:gap-8 
                  top-6 md:top-8 
                  left-1/2 -translate-x-1/2 
@@ -63,7 +84,7 @@ export default function Navbar() {
           className="text-base md:text-lg font-black tracking-tighter cursor-pointer hover:text-purple-400 transition-colors" 
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth'})}
         >
-          ANAN.
+          AN.
         </div>
       ) : (
         <Link href="/#about" className="flex items-center gap-2 text-xs md:text-sm font-bold hover:text-purple-400 transition-colors">
