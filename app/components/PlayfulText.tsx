@@ -123,7 +123,7 @@ export default function PlayfulText({ text, className, isHollow, isTitle = true,
                   y: animationY, 
                   rotate: animationRotate,
                   color: colorKeyframes,
-                  WebkitTextStrokeColor: strokeKeyframes,
+                   ["WebkitTextStrokeColor" as any]: strokeKeyframes,
                 }}
                 
                 transition={{ 
