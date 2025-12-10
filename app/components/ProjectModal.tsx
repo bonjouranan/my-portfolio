@@ -33,12 +33,11 @@ const ptComponents = {
       if (!value?.url) return null;
       return (
         <div className="my-12 w-full aspect-video bg-black">
-          {/* @ts-ignore */}
           <ReactPlayer 
-            url={value.url} 
-            width="100%" 
-            height="100%" 
-            controls={true} 
+            {...{ url: value.url } as any} // 👈 这一招能绕过所有类型检查
+            width="100%"
+            height="100%"
+            controls={true}
             playing={value.autoplay} 
             loop={value.autoplay}
             muted={value.autoplay}
