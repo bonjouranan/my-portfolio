@@ -1,15 +1,18 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IoClose } from "react-icons/io5";
 import { PortableText } from '@portabletext/react';
 import { urlFor } from '@/sanity/lib/image';
+import dynamic from 'next/dynamic';
+
+const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
 
 const ptComponents = {
   marks: {
     link: ({value, children}: any) => {
       const target = (value?.href || '').startsWith('http') ? '_blank' : undefined
-      return <a href={value?.href} target={target} rel="noopener noreferrer" className="text-purple-400 underline font-bold">{children}</a>
+      return <a href={value?.href} target={target} rel="noopener noreferrer" className="text-purple-400 underline font-bold cursor-none">{children}</a>
     },
     textColor: ({value, children}: any) => <span style={{ color: value?.hex }}>{children}</span>
   },
@@ -26,23 +29,23 @@ const ptComponents = {
       );
     },
     
-    // 🔥 修复：改回原生 video 标签，不再用 ReactPlayer
-       videoEmbed: ({ value }: any) => {
+    videoEmbed: ({ value }: any) => {
       if (!value?.url) return null;
       return (
-        <div className="my-12 w-full bg-black">
-          <video 
-            src={value.url}
-            controls 
-            className="w-full h-auto block"
-            // 👇👇👇 把这一行加进去 👇👇👇
-            autoPlay muted loop playsInline
+        <div className="my-12 w-full aspect-video bg-black">
+          <ReactPlayer 
+            url={value.url} 
+            width="100%" 
+            height="100%" 
+            controls={true} 
+            playing={value.autoplay} 
+            loop={value.autoplay}
+            muted={value.autoplay}
           />
           {value.caption && <p className="text-center text-sm text-gray-500 mt-2 italic">{value.caption}</p>}
         </div>
       );
     }
-
   },
   
   block: {
@@ -55,7 +58,6 @@ const ptComponents = {
 };
 
 export default function ProjectModal({ project, isOpen, onClose }: { project: any, isOpen: boolean, onClose: () => void }) {
-  
   useEffect(() => {
     if (isOpen) document.body.style.overflow = 'hidden';
     else document.body.style.overflow = 'unset';
@@ -67,18 +69,20 @@ export default function ProjectModal({ project, isOpen, onClose }: { project: an
       {isOpen && (
         <motion.div 
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl cursor-auto"
+          // ⚡️ 强制隐藏系统鼠标 (!cursor-none)
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl !cursor-none"
         >
           <button 
             onClick={onClose} 
-            className="fixed top-6 right-6 md:top-10 md:right-10 text-white z-[110] p-3 border border-white/20 rounded-full bg-black/50 hover:bg-white hover:text-black transition-colors backdrop-blur-md"
+            // 按钮也要 cursor-none，否则移上去会显示小手
+            className="fixed top-6 right-6 md:top-10 md:right-10 text-white z-[110] p-3 border border-white/20 rounded-full bg-black/50 hover:bg-white hover:text-black transition-colors backdrop-blur-md cursor-none"
           >
             <IoClose size={32} />
           </button>
 
           <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
-            className="fixed inset-0 overflow-y-auto no-scrollbar"
+            className="fixed inset-0 overflow-y-auto no-scrollbar cursor-none"
           >
             <div className="w-full max-w-5xl mx-auto px-4 md:px-8 pb-32">
                
@@ -88,7 +92,7 @@ export default function ProjectModal({ project, isOpen, onClose }: { project: an
                </div>
 
                {project.content ? (
-                 <div className="prose prose-invert prose-lg max-w-none text-center">
+                 <div className="prose prose-invert prose-lg max-w-none text-center cursor-none">
                    <PortableText value={project.content} components={ptComponents} />
                  </div>
                ) : (

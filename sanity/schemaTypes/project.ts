@@ -12,7 +12,7 @@ export default defineType({
     defineField({ name: 'category', title: 'Category', type: 'string' }),
     defineField({ name: 'year', title: 'Year', type: 'string' }),
 
-    // 封面
+    // 封面类型选择 (只控制 Video URL 是否显示)
     defineField({
       name: 'type',
       title: 'Cover Type',
@@ -20,20 +20,33 @@ export default defineType({
       options: { list: [{title:'Image',value:'image'}, {title:'Video (URL)',value:'video'}], layout: 'radio' },
       initialValue: 'image',
     }),
+    
+    // ⚡️ 修复：无论选什么类型，这里都能上传图片 ⚡️
+    // 1. 首页封面 / 视频封面
     defineField({
       name: 'mainImage',
-      title: 'Cover Image',
+      title: 'Cover Image (Homepage / Video Poster)',
+      description: '如果类型选 Image，这就是首页封面；如果选 Video，这就是视频未加载时的占位图。',
       type: 'image',
       options: { hotspot: true },
-      hidden: ({ document }) => document?.type !== 'image',
+      // hidden: ... 删掉了！
     }),
-    // 升级：支持任意视频链接
+
+    // 2. 二级页封面 (始终显示)
+    defineField({
+      name: 'secondaryImage',
+      title: 'Cover Image (Archive Page)',
+      description: '二级页展示的封面图（如果不填，默认使用首页封面）',
+      type: 'image',
+      options: { hotspot: true },
+      // hidden: ... 删掉了！
+    }),
+
+    // 视频链接 (只在选 Video 时显示)
     defineField({
       name: 'videoUrl',
-      title: 'Cover Video URL',
+      title: 'Cover Video URL (MP4)',
       type: 'url',
-      description: '支持 MP4直链, YouTube, Vimeo, Bilibili (需填 .mp4 格式的 B站源或嵌入代码)',
-      // 注意：B站链接通常不能直接 autoPlay，建议封面还是用 MP4 直链或短视频。
       hidden: ({ document }) => document?.type !== 'video',
     }),
     
@@ -80,19 +93,16 @@ export default defineType({
             { name: 'spacing', type: 'number', title: 'Spacing (px)', initialValue: 32 }
           ]
         },
-        // 🔥 新增：视频嵌入 (URL) 🔥
         defineField({
           name: 'videoEmbed',
           title: 'Video Embed (视频链接)',
           type: 'object',
           fields: [
-            { name: 'url', title: 'Video URL (YouTube, Vimeo, MP4...)', type: 'url' },
+            { name: 'url', title: 'Video URL', type: 'url' },
             { name: 'caption', title: 'Caption', type: 'string' },
             { name: 'autoplay', title: 'Autoplay', type: 'boolean', initialValue: false }
           ],
-          preview: {
-            select: { title: 'url' }
-          }
+          preview: { select: { title: 'url' } }
         })
       ],
     }),

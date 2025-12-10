@@ -16,15 +16,19 @@ export default function WorksPage() {
     window.scrollTo(0, 0);
 
     const fetchData = async () => {
-      // 获取全部作品 (包括 showOnHome=false 的)，按 order 排序
+      // ⚡️ 查询语句升级：同时取 mainImage 和 secondaryImage
       const data = await client.fetch(`*[_type == "project"] | order(order desc) {
-        title, category, "img": mainImage, year, type, videoUrl, content
+        title, category, 
+        "img": mainImage, 
+        "img2": secondaryImage, 
+        year, type, videoUrl, content
       }`);
 
       const formatted = data.map((item: any) => ({
         ...item,
         id: item.title,
-        img: item.img ? urlFor(item.img).url() : null,
+        // ⚡️ 逻辑升级：优先用 img2 (二级页封面)，没有则回退到 img (首页封面)
+        img: item.img2 ? urlFor(item.img2).url() : (item.img ? urlFor(item.img).url() : null),
         video: item.videoUrl,
         poster: item.img ? urlFor(item.img).url() : null,
       }));
@@ -83,6 +87,7 @@ export default function WorksPage() {
                 className="group cursor-pointer"
                 onClick={() => setSelectedProject(item)}
               >
+                {/* 这里的 aspect-[4/3] 可以根据二级页封面的实际比例调整，比如改为 aspect-video 或 aspect-square */}
                 <div className="relative overflow-hidden aspect-[4/3] mb-4 bg-gray-900 border border-white/10 group-hover:border-white transition-colors duration-300">
                   <img 
                     src={item.img} 
