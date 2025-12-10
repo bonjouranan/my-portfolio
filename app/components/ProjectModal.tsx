@@ -33,6 +33,7 @@ const ptComponents = {
       if (!value?.url) return null;
       return (
         <div className="my-12 w-full aspect-video bg-black">
+          {/* @ts-ignore */}
           <ReactPlayer 
             url={value.url} 
             width="100%" 
