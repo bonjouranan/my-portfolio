@@ -295,7 +295,7 @@ export default function Home() {
 
             <PlayfulText 
 
-              text={heroConfig?.topSmallText || "@Ver.1.1    2024-2025  "} 
+              text={heroConfig?.topSmallText || "@Ver.1.03    2024-2025  "} 
 
               delay={START_DELAY + 0.6} 
 
@@ -423,7 +423,7 @@ export default function Home() {
 
               {visibleCount < allProjects.length && visibleCount < 8 && (
 
-                <button onClick={() => setVisibleCount(prev => Math.min(prev + 4, 8))} className="w-full px-12 py-4 bg-white text-black hover:bg-purple-500 hover:text-white transition-all uppercase tracking-widest text-sm font-bold">Load More Work</button>
+                <button onClick={() => setVisibleCount(prev => Math.min(prev + 4, 8))} className="w-full px-12 py-4 bg-white text-black hover:bg-purple-500 hover:text-white transition-all uppercase tracking-widest text-sm font-bold">Load More Work 丨 加载更多作品</button>
 
               )}
 
@@ -431,7 +431,7 @@ export default function Home() {
 
               <Link href="/works" className="w-full">
 
-                <button className="w-full px-12 py-4 bg-white text-black hover:bg-purple-500 hover:text-white transition-all uppercase tracking-widest text-sm font-bold">View All Work</button>
+                <button className="w-full px-12 py-4 bg-white text-black hover:bg-purple-500 hover:text-white transition-all uppercase tracking-widest text-sm font-bold">View All WorkS 丨 浏览全部作品</button>
 
               </Link>
 
@@ -524,7 +524,7 @@ export default function Home() {
 
       {/* 4. Contact */}
 
-      <section id="contact" className="py-32 px-4 md:px-12 max-w-[1600px] mx-auto flex flex-col justify-center relative">
+      <section id="contact" className="pt-32 pb-64 md:pb-48 px-4 md:px-12 max-w-[1600px] mx-auto flex flex-col justify-center relative">
 
         <FadeIn forceShow={skipIntro}>
 
@@ -536,7 +536,7 @@ export default function Home() {
 
             {/* ⚡️ 移动端对齐微调：pb-1 */}
 
-            <span style={getSubTitleStyle()} className="uppercase pb-1">GET IN TOUCH</span>
+            <span style={getSubTitleStyle()} className="uppercase pb-1">LINK</span>
 
           </div>
 
@@ -580,11 +580,26 @@ export default function Home() {
 
         
 
-        <div className="absolute bottom-8 flex w-full justify-center left-0 text-[10px] md:text-xs text-gray-600 uppercase tracking-widest">
+{/* 底部三行文案 - 完美居中 */}
+<div className="absolute bottom-8 left-0 w-full flex flex-col items-center justify-center gap-2 px-4 text-center z-20 pointer-events-none">
+  
+  {/* 第一行：主要版权信息 */}
+  <p className="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest font-medium">
+    © 2025 ANAN DESIGN. ALL RIGHTS RESERVED.
+  </p>
+  
+  {/* 第二行：例如 ICP 备案号 */}
+  <p className="text-[10px] md:text-xs text-gray-600 uppercase tracking-widest opacity-80">
+    POWERED BY GOOGLE GEMINI 3.0 PRO
+  </p>
 
-           <span>{FOOTER_TEXT}</span>
+  {/* 第三行：例如 技术支持或 Slogan */}
+  <p className="text-[9px] md:text-[10px] text-gray-600 uppercase tracking-widest opacity-60">
+    ver.1.14051211
+  </p>
 
-        </div>
+</div>
+
 
       </section>
 
@@ -594,7 +609,7 @@ export default function Home() {
 
 }
 
-// 🟣 终极版 V9：双端适配 - 移动端聚光，PC端全景地平线
+// 🟣 终极版 V10：修复 PC 端光晕断层问题
 function BottomGlow() {
   const { scrollYProgress } = useScroll();
   const controls = useAnimation();
@@ -610,15 +625,13 @@ function BottomGlow() {
     durationOut: 1.5
   };
 
-  // ... (逻辑代码部分与上一个版本完全一致，此处省略以节省篇幅，请保留原有的 useEffect 等逻辑) ...
-  // 🔽 重新粘贴上面的逻辑代码以防万一，确保您复制完整 🔽
-  
   const triggerGlow = () => {
     if (fadeTimer.current) clearTimeout(fadeTimer.current);
     controls.start({
       opacity: 1, scale: 1, y: 0, filter: "blur(0px)",
       transition: { duration: GLOW_CONFIG.durationIn, ease: "easeOut" }
     });
+    
     fadeTimer.current = setTimeout(() => {
       controls.start({
         opacity: 0, scale: 1.1, y: 10, filter: "blur(20px)",
@@ -641,6 +654,7 @@ function BottomGlow() {
       const isAtBottom = Math.abs(scrollHeight - clientHeight - scrollTop) < 10;
       if (isAtBottom && e.deltaY > 0) triggerGlow();
     };
+
     const handleTouchStart = (e: TouchEvent) => { touchStartY.current = e.touches[0].clientY; };
     const handleTouchMove = (e: TouchEvent) => {
       if (!document.scrollingElement) return;
@@ -649,9 +663,11 @@ function BottomGlow() {
       const deltaY = touchStartY.current - e.touches[0].clientY;
       if (isAtBottom && deltaY > 10) { triggerGlow(); touchStartY.current = e.touches[0].clientY; }
     };
+
     window.addEventListener('wheel', handleWheel);
     window.addEventListener('touchstart', handleTouchStart);
     window.addEventListener('touchmove', handleTouchMove);
+    
     return () => {
       window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('touchstart', handleTouchStart);
@@ -661,24 +677,27 @@ function BottomGlow() {
   }, []);
 
   // --------------------------------------------------------------------------
-  // 🖼️ 渲染层修改：针对 PC (md:) 进行了"压扁"和"拉宽"
+  // 🖼️ 渲染层修改
   // --------------------------------------------------------------------------
   return (
     <motion.div 
       initial={{ opacity: 0, y: 10 }}
       animate={controls}
-      className="fixed bottom-0 left-0 w-full h-[20vh] pointer-events-none z-50 flex justify-center items-end mix-blend-screen overflow-hidden"
+      // 👇 修改 1：高度从 h-[20vh] 改为 h-[50vh]，给光晕更多空间
+      className="fixed bottom-0 left-0 w-full h-[50vh] pointer-events-none z-50 flex justify-center items-end mix-blend-screen overflow-hidden"
+      // 👇 修改 2：添加遮罩，强制顶部渐变透明，消除任何可能的硬边
+      style={{
+        maskImage: 'linear-gradient(to top, black 20%, transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to top, black 20%, transparent 100%)'
+      }}
     >
       <div className="relative flex justify-center 
         /* 📱 移动端默认 */
         w-full max-w-[800px] h-[150px] translate-y-[90%]
         
         /* 💻 PC端 (md) 样式重写 */
-        /* 宽度撑满，取消最大宽度限制，制造宽广感 */
         md:w-full md:max-w-none 
-        /* 高度减半，压扁光晕 */
         md:h-[80px] 
-        /* 下沉更多 (60%)，只露出一抹光 */
         md:translate-y-[120%]
       ">
         
@@ -687,7 +706,7 @@ function BottomGlow() {
           className="absolute bottom-0 rounded-[100%] opacity-60
             /* 📱 移动端 */
             w-[120%] h-[200px] blur-[80px]
-            /* 💻 PC端：拉得非常宽，模糊度更高，像地平线 */
+            /* 💻 PC端 */
             md:w-[200%] md:h-[180px] md:blur-[120px]"
           style={{ background: GLOW_CONFIG.baseColor }}
         ></div>
@@ -697,7 +716,7 @@ function BottomGlow() {
           className="absolute bottom-0 rounded-[100%] opacity-80
             /* 📱 移动端 */
             w-[80%] h-[150px] blur-[50px]
-            /* 💻 PC端：宽度增加，高度降低 */
+            /* 💻 PC端 */
             md:w-[120%] md:h-[100px] md:blur-[80px]"
           style={{ background: GLOW_CONFIG.coreColor }}
         ></div>
@@ -707,7 +726,7 @@ function BottomGlow() {
           className="absolute rounded-[100%] opacity-90
             /* 📱 移动端 */
             bottom-[-20px] w-[60%] h-[100px] blur-[30px]
-            /* 💻 PC端：变得很细长，提供底部的亮线感（依然是雾状） */
+            /* 💻 PC端 */
             md:bottom-[-30px] md:w-[80%] md:h-[60px] md:blur-[50px]"
           style={{ 
             background: `radial-gradient(circle at center, ${GLOW_CONFIG.highlightColor}, transparent 70%)` 
@@ -718,6 +737,7 @@ function BottomGlow() {
     </motion.div>
   );
 }
+
 
 
 

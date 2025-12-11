@@ -1,13 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react'; // 👈 记得引入 useEffect
+import { useState, useEffect } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
-import { usePathname } from 'next/navigation';
+// 👇 1. 修改引入：添加 useRouter
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { IoArrowBack } from "react-icons/io5";
 
 export default function Navbar() {
   const pathname = usePathname();
+  // 👇 2. 初始化 router
+  const router = useRouter(); 
+  
   const isHomePage = pathname === '/';
 
   const homeLinks = [
@@ -28,34 +32,28 @@ export default function Navbar() {
     }
   });
 
-  // ⚡️ 增强版：处理从外部页面跳回来的定位问题 (例如 works -> home#about)
+  // 处理从外部页面跳回来的定位问题 (保留原逻辑)
   useEffect(() => {
-    // 只有在首页且 URL 带有 #hash 时才触发
     if (isHomePage && window.location.hash) {
       const id = window.location.hash.replace('#', '');
       const element = document.getElementById(id);
       
       if (element) {
-        // 延时 500ms：确保移动端图片/布局完全加载后再滚动
         setTimeout(() => {
           element.scrollIntoView({ behavior: 'smooth' });
         }, 500);
       }
     }
-  }, [isHomePage]); // 只在“是否是首页”变化时触发一次
+  }, [isHomePage]);
 
   const scrollToSection = (id: string) => {
     if (!isHomePage) {
       window.location.href = `/#${id}`;
       return;
     }
-
     const element = document.getElementById(id);
     if (element) {
-      // 1. 立即滚一次 (让用户觉得反应很快)
       element.scrollIntoView({ behavior: 'smooth' });
-      
-      // 2. 延时 300ms 再滚一次 (作为“修正”，防止移动端高度没撑开滚错位置)
       setTimeout(() => {
          element.scrollIntoView({ behavior: 'smooth' });
       }, 300);
@@ -87,10 +85,14 @@ export default function Navbar() {
           AN.
         </div>
       ) : (
-        <Link href="/#about" className="flex items-center gap-2 text-xs md:text-sm font-bold hover:text-purple-400 transition-colors">
+        // 👇 3. 修改部分：不再是 Link，而是一个执行 router.back() 的 div/button
+        <button 
+          onClick={() => router.back()} 
+          className="flex items-center gap-2 text-xs md:text-sm font-bold hover:text-purple-400 transition-colors"
+        >
           <IoArrowBack size={14} />
           BACK
-        </Link>
+        </button>
       )}
 
       {/* 分隔线 (手机端隐藏) */}
@@ -108,6 +110,7 @@ export default function Navbar() {
             </div>
           ))
         ) : (
+          // 非首页时显示的 Archive 标签
           <div className="text-gray-400 cursor-default px-2 py-1 text-[10px] md:text-sm font-bold tracking-widest">
             ARCHIVE
           </div>

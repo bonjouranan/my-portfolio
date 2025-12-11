@@ -12,7 +12,7 @@ export default defineType({
     defineField({ name: 'category', title: 'Category', type: 'string' }),
     defineField({ name: 'year', title: 'Year', type: 'string' }),
 
-    // 封面类型选择 (只控制 Video URL 是否显示)
+    // 封面类型选择
     defineField({
       name: 'type',
       title: 'Cover Type',
@@ -21,28 +21,26 @@ export default defineType({
       initialValue: 'image',
     }),
     
-    // ⚡️ 修复：无论选什么类型，这里都能上传图片 ⚡️
-    // 1. 首页封面 / 视频封面
+    // 1. 首页封面 (保持 3:4 不变)
     defineField({
       name: 'mainImage',
       title: 'Cover Image (Homepage / Video Poster)',
-      description: '如果类型选 Image，这就是首页封面；如果选 Video，这就是视频未加载时的占位图。',
+      description: '【首页专用】比例 3:4 (竖图)。建议尺寸：900x1200px。此图仅用于首页展示。',
       type: 'image',
       options: { hotspot: true },
-      // hidden: ... 删掉了！
     }),
 
-    // 2. 二级页封面 (始终显示)
+    // 2. 二级页封面 (修改为 Behance 尺寸)
     defineField({
       name: 'secondaryImage',
       title: 'Cover Image (Archive Page)',
-      description: '二级页展示的封面图（如果不填，默认使用首页封面）',
+      // 💡 修正：明确标注支持 Behance 尺寸
+      description: '【全部作品页专用】支持 Behance 封面尺寸 (808x632px)。你不需要专门裁切，直接上传 Behance 的封面图即可，前端已设为自适应比例。',
       type: 'image',
       options: { hotspot: true },
-      // hidden: ... 删掉了！
     }),
 
-    // 视频链接 (只在选 Video 时显示)
+    // 视频链接
     defineField({
       name: 'videoUrl',
       title: 'Cover Video URL (MP4)',
@@ -50,7 +48,7 @@ export default defineType({
       hidden: ({ document }) => document?.type !== 'video',
     }),
     
-    // 详情编辑器
+    // 详情编辑器 (保持不变)
     defineField({
       name: 'content',
       title: 'Project Details',
