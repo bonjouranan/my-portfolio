@@ -9,7 +9,23 @@ export default defineType({
     defineField({ name: 'title', title: 'Display Title', type: 'string' }),
     defineField({ name: 'showOnHome', title: 'Show on Homepage', type: 'boolean', initialValue: true }),
     defineField({ name: 'order', title: 'Sort Order', type: 'number', initialValue: 0 }),
-    defineField({ name: 'category', title: 'Category', type: 'string' }),
+    
+    // --- 标签与分类 ---
+    defineField({ 
+      name: 'category', 
+      title: 'Display Tag (作品卡片展示标签)', 
+      description: '【仅展示】显示在作品卡片左下角的文字 (例如: VAPE - CGI & AIGC)。此处内容不会生成筛选按钮。',
+      type: 'string' 
+    }),
+    defineField({
+      name: 'filterCategories',
+      title: 'Filter Categories (筛选分类)',
+      description: '【筛选专用】在此处添加标签 (例如: CGI, COOL, AIGC)。只有这里出现的标签，才会生成网站顶部的筛选按钮。',
+      type: 'array',
+      of: [{type: 'string'}],
+      options: { layout: 'tags' }
+    }),
+
     defineField({ name: 'year', title: 'Year', type: 'string' }),
 
     // 封面类型选择
@@ -17,38 +33,47 @@ export default defineType({
       name: 'type',
       title: 'Cover Type',
       type: 'string',
-      options: { list: [{title:'Image',value:'image'}, {title:'Video (URL)',value:'video'}], layout: 'radio' },
+      options: { list: [{title:'Image',value:'image'}, {title:'Video (URL / Upload)',value:'video'}], layout: 'radio' },
       initialValue: 'image',
     }),
     
-    // 1. 首页封面 (保持 3:4 不变)
+    // 1. 首页封面
     defineField({
       name: 'mainImage',
       title: 'Cover Image (Homepage / Video Poster)',
-      description: '【首页专用】比例 3:4 (竖图)。建议尺寸：900x1200px。此图仅用于首页展示。',
+      description: '【首页专用】比例 3:4 (竖图)。如果类型选了 Video，这张图会作为视频加载前的封面 (Poster)。',
       type: 'image',
       options: { hotspot: true },
     }),
 
-    // 2. 二级页封面 (修改为 Behance 尺寸)
+    // 2. 二级页封面
     defineField({
       name: 'secondaryImage',
       title: 'Cover Image (Archive Page)',
-      // 💡 修正：明确标注支持 Behance 尺寸
-      description: '【全部作品页专用】支持 Behance 封面尺寸 (808x632px)。你不需要专门裁切，直接上传 Behance 的封面图即可，前端已设为自适应比例。',
+      description: '【全部作品页专用】支持 Behance 封面尺寸 (808x632px)。',
       type: 'image',
       options: { hotspot: true },
     }),
 
-    // 视频链接
+    // --- 封面视频配置 (修改后) ---
     defineField({
       name: 'videoUrl',
-      title: 'Cover Video URL (MP4)',
+      title: 'Cover Video URL (Link)',
+      description: '填入 .mp4 结尾的链接 (旧方式)',
       type: 'url',
       hidden: ({ document }) => document?.type !== 'video',
     }),
+    // 👇 新增：封面视频文件上传
+    defineField({
+      name: 'coverVideoFile',
+      title: 'Cover Video File (Upload)',
+      description: '直接上传封面视频文件 (优先于 URL 展示)',
+      type: 'file',
+      options: { accept: 'video/*' },
+      hidden: ({ document }) => document?.type !== 'video',
+    }),
     
-    // 详情编辑器 (保持不变)
+    // --- 详情编辑器 ---
     defineField({
       name: 'content',
       title: 'Project Details',
@@ -57,9 +82,14 @@ export default defineType({
         { 
           type: 'block',
           styles: [
-            {title: 'Normal', value: 'normal'},
+            {title: 'Normal (Default)', value: 'normal'},
+            {title: 'Normal (Left)', value: 'normal_left'},
+            {title: 'Normal (Center)', value: 'normal_center'},
+            {title: 'Normal (Right)', value: 'normal_right'},
             {title: 'H1', value: 'h1'},
+            {title: 'H1 (Center)', value: 'h1_center'},
             {title: 'H2', value: 'h2'},
+            {title: 'H2 (Center)', value: 'h2_center'},
             {title: 'H3', value: 'h3'},
             {title: 'Quote', value: 'blockquote'},
           ],
@@ -91,16 +121,28 @@ export default defineType({
             { name: 'spacing', type: 'number', title: 'Spacing (px)', initialValue: 32 }
           ]
         },
+        // 详情页视频组件
         defineField({
           name: 'videoEmbed',
-          title: 'Video Embed (视频链接)',
+          title: 'Video (URL / Upload)',
           type: 'object',
           fields: [
             { name: 'url', title: 'Video URL', type: 'url' },
+            { name: 'videoFile', title: 'Video File', type: 'file', options: { accept: 'video/*' } },
             { name: 'caption', title: 'Caption', type: 'string' },
+            { 
+              name: 'spacing', 
+              title: 'Vertical Spacing (上下间距 px)', 
+              type: 'number', 
+              initialValue: 32,
+              validation: Rule => Rule.min(0).max(200)
+            },
             { name: 'autoplay', title: 'Autoplay', type: 'boolean', initialValue: false }
           ],
-          preview: { select: { title: 'url' } }
+          preview: { 
+            select: { title: 'url', file: 'videoFile.asset.originalFilename' },
+            prepare({title, file}) { return { title: file ? `File: ${file}` : (title || 'Video Embed') } }
+          }
         })
       ],
     }),

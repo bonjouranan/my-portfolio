@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ProjectModal from '../components/ProjectModal';
+// 👇 1. 引入新组件
+import BottomGlow from '../components/BottomGlow'; 
 import { MdArrowOutward } from "react-icons/md";
 import { client } from '@/sanity/lib/client';
 import { urlFor } from '@/sanity/lib/image';
@@ -16,30 +18,44 @@ export default function WorksPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
     const fetchData = async () => {
+      // 在查询中加入 filterCategories
       const data = await client.fetch(`*[_type == "project"] | order(order desc) {
-        title, category, 
+        title, 
+        category,          // 展示标签
+        filterCategories,  // 筛选分类
         "img": mainImage, 
         "img2": secondaryImage, 
         year, type, videoUrl, content
       }`);
+
       const formatted = data.map((item: any) => ({
         ...item,
         id: item.title,
         img: item.img2 ? urlFor(item.img2).url() : (item.img ? urlFor(item.img).url() : null),
         video: item.videoUrl,
         poster: item.img ? urlFor(item.img).url() : null,
+        filterCategories: item.filterCategories || [] 
       }));
+
       setAllWorks(formatted);
-      const uniqueCats = Array.from(new Set(formatted.map((i: any) => i.category))).filter(Boolean);
+
+      const allTags = formatted.flatMap((p: any) => p.filterCategories);
+      const uniqueCats = Array.from(new Set(allTags)).filter(Boolean);
+      
       setCategories(['ALL', ...uniqueCats as string[]]);
     };
     fetchData();
   }, []);
 
-  const filteredWorks = activeCategory === 'ALL' ? allWorks : allWorks.filter(item => item.category === activeCategory);
+  const filteredWorks = activeCategory === 'ALL' 
+    ? allWorks 
+    : allWorks.filter(item => item.filterCategories && item.filterCategories.includes(activeCategory));
 
   return (
-    <main className="bg-black min-h-screen text-white selection:bg-purple-500 selection:text-white pb-32 overflow-x-hidden w-full">
+    <main className="bg-black min-h-screen text-white selection:bg-purple-500 selection:text-white pb-32 overflow-x-hidden w-full relative">
+      {/* 👇 2. 放入特效组件 (建议放在这里) */}
+      <BottomGlow />
+
       <ProjectModal project={selectedProject || {}} isOpen={!!selectedProject} onClose={() => setSelectedProject(null)} />
       
       <div className="pt-24 md:pt-40 px-4 md:px-12 max-w-[1800px] mx-auto">
@@ -76,7 +92,7 @@ export default function WorksPage() {
                 className="group cursor-pointer"
                 onClick={() => setSelectedProject(item)}
               >
-                {/* ⚡️ 修改核心：使用 Behance 标准比例 808/632 (约 404/316) */}
+                {/* 使用 Behance 标准比例 808/632 */}
                 <div className="relative overflow-hidden aspect-[808/632] mb-4 bg-gray-900 border border-white/10 group-hover:border-white transition-colors duration-300">
                   <img 
                     src={item.img} 
@@ -90,7 +106,7 @@ export default function WorksPage() {
                     <span className="text-xs text-gray-500 border border-gray-700 px-2 py-1 rounded inline-block mt-1">{item.category}</span>
                   </div>
                   <div className="w-10 h-10 border border-white/30 rounded-full flex-shrink-0 flex items-center justify-center text-white group-hover:bg-purple-600 group-hover:border-purple-600 group-hover:text-white transition-all duration-300 group-hover:rotate-45">
-                     <MdArrowOutward size={20} />
+                      <MdArrowOutward size={20} />
                   </div>
                 </div>
               </motion.div>

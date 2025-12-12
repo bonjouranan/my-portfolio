@@ -2,18 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
-// 👇 1. 修改引入：添加 useRouter
 import { usePathname, useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { IoArrowBack } from "react-icons/io5";
+// 👇 引入 Context
+import { useLoader } from '../context/LoaderContext';
 
 export default function Navbar() {
   const pathname = usePathname();
-  // 👇 2. 初始化 router
-  const router = useRouter(); 
-  
-  const isHomePage = pathname === '/';
+  const router = useRouter();
+  // 👇 获取触发器
+  const { triggerIntro } = useLoader();
 
+  const isHomePage = pathname === '/';
+  
   const homeLinks = [
     { name: 'WORK', id: 'work' },
     { name: 'ABOUT', id: 'about' },
@@ -32,12 +33,20 @@ export default function Navbar() {
     }
   });
 
-  // 处理从外部页面跳回来的定位问题 (保留原逻辑)
+  // 处理返回首页的逻辑
+  const handleBackToHome = () => {
+    triggerIntro(); // 1. 先触发动画 (此时屏幕会变黑加载)
+    
+    // 2. 稍微延迟一点点再跳转，让动画先出来
+    setTimeout(() => {
+      router.push('/'); 
+    }, 10);
+  };
+
   useEffect(() => {
     if (isHomePage && window.location.hash) {
       const id = window.location.hash.replace('#', '');
       const element = document.getElementById(id);
-      
       if (element) {
         setTimeout(() => {
           element.scrollIntoView({ behavior: 'smooth' });
@@ -48,7 +57,11 @@ export default function Navbar() {
 
   const scrollToSection = (id: string) => {
     if (!isHomePage) {
-      window.location.href = `/#${id}`;
+      // 如果不在首页，点击导航链接也是一种“回首页”
+      triggerIntro();
+      setTimeout(() => {
+        window.location.href = `/#${id}`;
+      }, 10);
       return;
     }
     const element = document.getElementById(id);
@@ -70,11 +83,11 @@ export default function Navbar() {
       animate={hidden ? "hidden" : "visible"}
       transition={{ duration: 0.35, ease: "easeInOut" }}
       className="fixed z-50 flex items-center justify-between md:justify-start gap-4 md:gap-8 
-                 top-6 md:top-8 
-                 left-1/2 -translate-x-1/2 
-                 w-[90%] md:w-max 
-                 px-5 py-3 md:px-8 md:py-3 
-                 rounded-full bg-black/60 backdrop-blur-xl border border-white/20 text-white shadow-2xl"
+                  top-6 md:top-8 
+                  left-1/2 -translate-x-1/2 
+                  w-[90%] md:w-max 
+                  px-5 py-3 md:px-8 md:py-3 
+                  rounded-full bg-black/60 backdrop-blur-xl border border-white/20 text-white shadow-2xl"
     >
       {/* 左侧：Logo 或 Back */}
       {isHomePage ? (
@@ -85,9 +98,9 @@ export default function Navbar() {
           AN.
         </div>
       ) : (
-        // 👇 3. 修改部分：不再是 Link，而是一个执行 router.back() 的 div/button
+        // 👇 修改：使用 handleBackToHome
         <button 
-          onClick={() => router.back()} 
+          onClick={handleBackToHome} 
           className="flex items-center gap-2 text-xs md:text-sm font-bold hover:text-purple-400 transition-colors"
         >
           <IoArrowBack size={14} />
@@ -95,7 +108,7 @@ export default function Navbar() {
         </button>
       )}
 
-      {/* 分隔线 (手机端隐藏) */}
+      {/* 分隔线 */}
       <div className="hidden md:block w-[1px] h-4 bg-white/20"></div>
 
       {/* 右侧：菜单 */}
@@ -110,7 +123,6 @@ export default function Navbar() {
             </div>
           ))
         ) : (
-          // 非首页时显示的 Archive 标签
           <div className="text-gray-400 cursor-default px-2 py-1 text-[10px] md:text-sm font-bold tracking-widest">
             ARCHIVE
           </div>

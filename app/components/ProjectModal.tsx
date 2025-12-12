@@ -1,12 +1,39 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IoClose } from "react-icons/io5";
 import { PortableText } from '@portabletext/react';
 import { urlFor } from '@/sanity/lib/image';
+import { client } from '@/sanity/lib/client'; // 👈 自动获取配置，不用手动填了
 import dynamic from 'next/dynamic';
 
 const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
+
+// 辅助函数：自动生成准确的文件链接
+const getFileUrl = (ref: string) => {
+  if (!ref) return null;
+  const parts = ref.split('-');
+  if (parts.length < 3) return null;
+  const id = parts[1]; 
+  const format = parts[parts.length - 1]; // e.g., 'mp4'
+
+  // ⚡️ 自动从系统配置读取 Project ID 和 Dataset
+  const { projectId, dataset } = client.config();
+
+  if (!projectId || !dataset) {
+    console.error("❌ 无法自动获取 Project ID，请检查 sanity/lib/client.ts");
+    return null;
+  }
+  
+  return `https://cdn.sanity.io/files/${projectId}/${dataset}/${id}.${format}`;
+};
+
+const getBilibiliId = (url: string) => {
+  if (!url) return null;
+  const match = url.match(/(BV[a-zA-Z0-9]+)/);
+  return match ? match[1] : null;
+};
 
 const ptComponents = {
   marks: {
@@ -29,31 +56,104 @@ const ptComponents = {
       );
     },
     
+    // 🎥 视频核心逻辑 (Behance 风格优化版)
     videoEmbed: ({ value }: any) => {
-      if (!value?.url) return null;
-      return (
-        <div className="my-12 w-full aspect-video bg-black">
-          <ReactPlayer 
-            {...{ url: value.url } as any} // 👈 这一招能绕过所有类型检查
-            width="100%"
-            height="100%"
-            controls={true}
-            playing={value.autoplay} 
-            loop={value.autoplay}
-            muted={value.autoplay}
-          />
-          {value.caption && <p className="text-center text-sm text-gray-500 mt-2 italic">{value.caption}</p>}
-        </div>
-      );
+      // 1. 获取间距
+      const spacing = value.spacing !== undefined ? value.spacing : 32;
+      const wrapperStyle = { marginTop: `${spacing}px`, marginBottom: `${spacing}px` };
+
+      // 2. Bilibili 处理 (你确认这个是好的)
+      const isBilibili = value.url?.includes('bilibili.com');
+      const bvid = isBilibili ? getBilibiliId(value.url) : null;
+      
+      if (isBilibili && bvid) {
+        return (
+          <div style={wrapperStyle} className="w-full aspect-video bg-black rounded overflow-hidden shadow-lg">
+             <iframe 
+               src={`//player.bilibili.com/player.html?bvid=${bvid}&page=1&high_quality=1&danmaku=0`} 
+               className="w-full h-full"
+               scrolling="no" 
+               frameBorder="0" 
+               allowFullScreen
+             />
+             {value.caption && <p className="text-center text-sm text-gray-500 mt-2 italic">{value.caption}</p>}
+          </div>
+        )
+      }
+
+      // 3. 上传的 MP4 文件处理
+      const fileUrl = value.videoFile?.asset?._ref ? getFileUrl(value.videoFile.asset._ref) : null;
+      
+      if (fileUrl) {
+        return (
+          <div style={wrapperStyle} className="w-full bg-black relative shadow-lg group">
+             {/* 使用原生 video 标签，兼容性最好 */}
+             <video 
+               src={fileUrl}
+               className="w-full h-auto block" // h-auto 确保按比例撑开，不留黑边
+               controls
+               autoPlay={value.autoplay}
+               loop={value.autoplay}
+               muted={value.autoplay}
+               playsInline
+               // 添加错误处理，如果加载失败会显示文字
+               onError={(e) => {
+                 const target = e.target as HTMLVideoElement;
+                 target.style.display = 'none'; // 隐藏坏掉的视频
+                 if (target.parentElement) {
+                    const err = document.createElement('div');
+                    err.className = 'text-red-500 text-center py-10 border border-red-500';
+                    err.innerHTML = `⚠️ 视频加载失败<br/><span class="text-xs text-gray-400">${fileUrl}</span>`;
+                    target.parentElement.appendChild(err);
+                 }
+               }}
+             >
+               您的浏览器不支持 HTML5 视频播放。
+             </video>
+             {value.caption && <p className="text-center text-sm text-gray-500 mt-2 italic">{value.caption}</p>}
+          </div>
+        );
+      }
+
+      // 4. YouTube / Vimeo 处理
+      if (value.url) {
+        return (
+          <div style={wrapperStyle} className="w-full aspect-video bg-black relative shadow-lg">
+            <ReactPlayer 
+              url={value.url}
+              width="100%"
+              height="100%"
+              controls={true}
+              playing={value.autoplay}
+              loop={value.autoplay}
+              muted={value.autoplay}
+              // 针对中国网络环境的提示
+              onError={() => console.log('Video Load Error: 可能因网络原因(如未翻墙)导致 YouTube/Vimeo 无法加载')}
+            />
+            {/* 提示层：如果 ReactPlayer 加载不出来，至少用户知道这里有个视频 */}
+            <div className="absolute inset-0 flex items-center justify-center -z-10 text-gray-600 text-xs">
+              Loading Video... (If blank, check network)
+            </div>
+            {value.caption && <p className="text-center text-sm text-gray-500 mt-2 italic">{value.caption}</p>}
+          </div>
+        );
+      }
+
+      return null;
+    },
+
+    block: {
+      normal: ({children}: any) => <p className="mb-6 leading-relaxed text-gray-300">{children}</p>,
+      normal_left: ({children}: any) => <p className="mb-6 leading-relaxed text-gray-300 text-left">{children}</p>,
+      normal_center: ({children}: any) => <p className="mb-6 leading-relaxed text-gray-300 text-center">{children}</p>,
+      normal_right: ({children}: any) => <p className="mb-6 leading-relaxed text-gray-300 text-right">{children}</p>,
+      h1: ({children}: any) => <h1 className="text-4xl font-black text-white mt-16 mb-8">{children}</h1>,
+      h1_center: ({children}: any) => <h1 className="text-4xl font-black text-white mt-16 mb-8 text-center">{children}</h1>,
+      h2: ({children}: any) => <h2 className="text-3xl font-bold text-white mt-12 mb-6">{children}</h2>,
+      h2_center: ({children}: any) => <h2 className="text-3xl font-bold text-white mt-12 mb-6 text-center">{children}</h2>,
+      h3: ({children}: any) => <h3 className="text-2xl font-bold text-purple-400 mt-10 mb-4">{children}</h3>,
+      blockquote: ({children}: any) => <blockquote className="border-l-4 border-purple-500 pl-4 italic text-gray-400 my-8 bg-white/5 p-4 rounded-r text-left">{children}</blockquote>,
     }
-  },
-  
-  block: {
-    normal: ({children}: any) => <p className="mb-6 leading-relaxed text-gray-300">{children}</p>,
-    h1: ({children}: any) => <h1 className="text-4xl font-black text-white mt-16 mb-8">{children}</h1>,
-    h2: ({children}: any) => <h2 className="text-3xl font-bold text-white mt-12 mb-6">{children}</h2>,
-    h3: ({children}: any) => <h3 className="text-2xl font-bold text-purple-400 mt-10 mb-4">{children}</h3>,
-    blockquote: ({children}: any) => <blockquote className="border-l-4 border-purple-500 pl-4 italic text-gray-400 my-8 bg-white/5 p-4 rounded-r">{children}</blockquote>,
   }
 };
 
@@ -69,28 +169,23 @@ export default function ProjectModal({ project, isOpen, onClose }: { project: an
       {isOpen && (
         <motion.div 
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          // ⚡️ 强制隐藏系统鼠标 (!cursor-none)
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-xl !cursor-none"
         >
           <button 
             onClick={onClose} 
-            // 按钮也要 cursor-none，否则移上去会显示小手
             className="fixed top-6 right-6 md:top-10 md:right-10 text-white z-[110] p-3 border border-white/20 rounded-full bg-black/50 hover:bg-white hover:text-black transition-colors backdrop-blur-md cursor-none"
           >
             <IoClose size={32} />
           </button>
-
           <motion.div 
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }}
             className="fixed inset-0 overflow-y-auto no-scrollbar cursor-none"
           >
             <div className="w-full max-w-5xl mx-auto px-4 md:px-8 pb-32">
-               
                <div className="pt-32 pb-12 text-center border-b border-white/10 mb-12">
-                  <p className="text-purple-400 font-bold tracking-[0.2em] mb-4 text-lg uppercase">{project.category} — {project.year}</p>
+                  <p className="text-purple-400 font-bold tracking-[0.2em] mb-4 text-lg uppercase">{project.category}</p>
                   <h1 className="text-4xl md:text-7xl font-black uppercase leading-tight">{project.title}</h1>
                </div>
-
                {project.content ? (
                  <div className="prose prose-invert prose-lg max-w-none text-center cursor-none">
                    <PortableText value={project.content} components={ptComponents} />
