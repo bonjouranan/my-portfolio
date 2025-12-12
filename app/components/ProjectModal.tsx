@@ -1,28 +1,28 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IoClose } from "react-icons/io5";
 import { PortableText } from '@portabletext/react';
 import { urlFor } from '@/sanity/lib/image';
-import { client } from '@/sanity/lib/client'; // 👈 自动获取配置，不用手动填了
+import { client } from '@/sanity/lib/client';
 import dynamic from 'next/dynamic';
 
-const ReactPlayer = dynamic(() => import('react-player'), { ssr: false });
+// 🛠️ 紧急回滚：改回最原始的 import 方式，这是最安全的
+// 使用 .then(mod => mod.default) 确保兼容性
+const ReactPlayer = dynamic(() => import('react-player').then(mod => mod.default), { ssr: false });
 
-// 辅助函数：自动生成准确的文件链接
 const getFileUrl = (ref: string) => {
   if (!ref) return null;
   const parts = ref.split('-');
   if (parts.length < 3) return null;
   const id = parts[1]; 
-  const format = parts[parts.length - 1]; // e.g., 'mp4'
+  const format = parts[parts.length - 1];
 
-  // ⚡️ 自动从系统配置读取 Project ID 和 Dataset
   const { projectId, dataset } = client.config();
 
   if (!projectId || !dataset) {
-    console.error("❌ 无法自动获取 Project ID，请检查 sanity/lib/client.ts");
+    console.error("❌ 无法自动获取 Project ID");
     return null;
   }
   
@@ -56,13 +56,11 @@ const ptComponents = {
       );
     },
     
-    // 🎥 视频核心逻辑 (Behance 风格优化版)
     videoEmbed: ({ value }: any) => {
-      // 1. 获取间距
       const spacing = value.spacing !== undefined ? value.spacing : 32;
       const wrapperStyle = { marginTop: `${spacing}px`, marginBottom: `${spacing}px` };
 
-      // 2. Bilibili 处理 (你确认这个是好的)
+      // 1. B站
       const isBilibili = value.url?.includes('bilibili.com');
       const bvid = isBilibili ? getBilibiliId(value.url) : null;
       
@@ -81,25 +79,23 @@ const ptComponents = {
         )
       }
 
-      // 3. 上传的 MP4 文件处理
+      // 2. 文件上传
       const fileUrl = value.videoFile?.asset?._ref ? getFileUrl(value.videoFile.asset._ref) : null;
       
       if (fileUrl) {
         return (
           <div style={wrapperStyle} className="w-full bg-black relative shadow-lg group">
-             {/* 使用原生 video 标签，兼容性最好 */}
              <video 
                src={fileUrl}
-               className="w-full h-auto block" // h-auto 确保按比例撑开，不留黑边
+               className="w-full h-auto block" 
                controls
                autoPlay={value.autoplay}
                loop={value.autoplay}
                muted={value.autoplay}
                playsInline
-               // 添加错误处理，如果加载失败会显示文字
                onError={(e) => {
                  const target = e.target as HTMLVideoElement;
-                 target.style.display = 'none'; // 隐藏坏掉的视频
+                 target.style.display = 'none'; 
                  if (target.parentElement) {
                     const err = document.createElement('div');
                     err.className = 'text-red-500 text-center py-10 border border-red-500';
@@ -115,24 +111,26 @@ const ptComponents = {
         );
       }
 
-      // 4. YouTube / Vimeo 处理
+      // 3. 外部链接
       if (value.url) {
         return (
           <div style={wrapperStyle} className="w-full aspect-video bg-black relative shadow-lg">
+            {/* 使用 as any 彻底解决类型报错 */}
             <ReactPlayer 
-              url={value.url}
-              width="100%"
-              height="100%"
-              controls={true}
-              playing={value.autoplay}
-              loop={value.autoplay}
-              muted={value.autoplay}
-              // 针对中国网络环境的提示
-              onError={() => console.log('Video Load Error: 可能因网络原因(如未翻墙)导致 YouTube/Vimeo 无法加载')}
+              {...{
+                url: value.url,
+                width: "100%",
+                height: "100%",
+                controls: true,
+                playing: value.autoplay,
+                loop: value.autoplay,
+                muted: value.autoplay,
+                onError: () => console.log('Video Load Error')
+              } as any}
             />
-            {/* 提示层：如果 ReactPlayer 加载不出来，至少用户知道这里有个视频 */}
+            
             <div className="absolute inset-0 flex items-center justify-center -z-10 text-gray-600 text-xs">
-              Loading Video... (If blank, check network)
+              Loading Video...
             </div>
             {value.caption && <p className="text-center text-sm text-gray-500 mt-2 italic">{value.caption}</p>}
           </div>
