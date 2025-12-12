@@ -124,7 +124,7 @@ export default function Navbar() {
           ))
         ) : (
           <div className="text-gray-400 cursor-default px-2 py-1 text-[10px] md:text-sm font-bold tracking-widest">
-            ARCHIVE
+            AN.
           </div>
         )}
       </div>
