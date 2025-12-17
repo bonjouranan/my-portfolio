@@ -1,3 +1,8 @@
+/* 📍 app/globals.css (更新后的完整代码) */
+
+/* 👇 将新卡片的 CSS 样式导入到全局 */
+@import './components/TiltedCard.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -21,12 +26,13 @@
 }
 
 body.no-scroll { overflow: hidden; }
+
 /* 滚动锚点偏移 (防止被导航栏遮挡) */
 html {
   scroll-padding-top: 120px; /* 根据导航栏高度调整 */
 }
-/* ...之前的代码... */
 
+/* ...之前的代码... */
 /* 强制给后台页面恢复鼠标 */
 body:has(div[id="sanity"]) {
   cursor: auto !important;
