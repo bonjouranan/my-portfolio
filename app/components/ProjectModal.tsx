@@ -8,23 +8,18 @@ import { urlFor } from '@/sanity/lib/image';
 import { client } from '@/sanity/lib/client';
 import dynamic from 'next/dynamic';
 
-// 1. 动态引入播放器 (使用最兼容的写法)
 const ReactPlayer = dynamic(() => import('react-player').then(mod => mod.default), { ssr: false });
 
-// 2. 辅助函数
+// --- 辅助函数 ---
 const getFileUrl = (ref: string) => {
   if (!ref) return null;
   const parts = ref.split('-');
   if (parts.length < 3) return null;
   const id = parts[1]; 
   const format = parts[parts.length - 1];
-  
-  // 安全获取配置
   const config = client.config();
   const projectId = config.projectId;
   const dataset = config.dataset || 'production';
-
-  if (!projectId) return null;
   return `https://cdn.sanity.io/files/${projectId}/${dataset}/${id}.${format}`;
 };
 
@@ -34,16 +29,30 @@ const getBilibiliId = (url: string) => {
   return match ? match[1] : null;
 };
 
+// ✨ 新增：鼠标进入媒体区域的处理函数
+const handleMouseEnterMedia = () => {
+  document.body.classList.add('hovering-media');
+};
+
+// ✨ 新增：鼠标离开媒体区域的处理函数
+const handleMouseLeaveMedia = () => {
+  document.body.classList.remove('hovering-media');
+};
+
 export default function ProjectModal({ project, isOpen, onClose }: { project: any, isOpen: boolean, onClose: () => void }) {
   
   useEffect(() => {
     if (isOpen) document.body.style.overflow = 'hidden';
-    else document.body.style.overflow = 'unset';
-    return () => { document.body.style.overflow = 'unset'; }
+    else {
+      document.body.style.overflow = 'unset';
+      document.body.classList.remove('hovering-media'); // 关闭时确保清除状态
+    }
+    return () => { 
+      document.body.style.overflow = 'unset'; 
+      document.body.classList.remove('hovering-media');
+    }
   }, [isOpen]);
 
-  // 👇👇👇 关键修改：把 ptComponents 移到组件内部，并用 useMemo 包裹 👇👇👇
-  // 这样做能防止 Next.js 在构建时混淆组件引用的顺序
   const ptComponents = useMemo(() => {
     return {
       marks: {
@@ -70,15 +79,21 @@ export default function ProjectModal({ project, isOpen, onClose }: { project: an
           const spacing = value.spacing !== undefined ? value.spacing : 32;
           const wrapperStyle = { marginTop: `${spacing}px`, marginBottom: `${spacing}px` };
 
-          // B站
+          // 1. B站
           const isBilibili = value.url?.includes('bilibili.com');
           const bvid = isBilibili ? getBilibiliId(value.url) : null;
+          
           if (isBilibili && bvid) {
             return (
-              <div style={wrapperStyle} className="w-full aspect-video bg-black rounded overflow-hidden shadow-lg">
+              <div 
+                style={wrapperStyle} 
+                className="w-full aspect-video bg-black rounded overflow-hidden shadow-lg cursor-auto"
+                onMouseEnter={handleMouseEnterMedia} // ✨ 隐藏自定义鼠标
+                onMouseLeave={handleMouseLeaveMedia} // ✨ 恢复自定义鼠标
+              >
                  <iframe 
                    src={`//player.bilibili.com/player.html?bvid=${bvid}&page=1&high_quality=1&danmaku=0`} 
-                   className="w-full h-full"
+                   className="w-full h-full pointer-events-auto" // 确保 iframe 能接收点击
                    scrolling="no" 
                    frameBorder="0" 
                    allowFullScreen
@@ -88,11 +103,16 @@ export default function ProjectModal({ project, isOpen, onClose }: { project: an
             )
           }
 
-          // 文件上传
+          // 2. 视频文件
           const fileUrl = value.videoFile?.asset?._ref ? getFileUrl(value.videoFile.asset._ref) : null;
           if (fileUrl) {
             return (
-              <div style={wrapperStyle} className="w-full bg-black relative shadow-lg group">
+              <div 
+                style={wrapperStyle} 
+                className="w-full bg-black relative shadow-lg group cursor-auto"
+                onMouseEnter={handleMouseEnterMedia} // ✨ 隐藏自定义鼠标
+                onMouseLeave={handleMouseLeaveMedia} // ✨ 恢复自定义鼠标
+              >
                  <video 
                    src={fileUrl}
                    className="w-full h-auto block" 
@@ -109,10 +129,15 @@ export default function ProjectModal({ project, isOpen, onClose }: { project: an
             );
           }
 
-          // 外部链接 (YouTube/Vimeo)
+          // 3. YouTube / 通用链接
           if (value.url) {
             return (
-              <div style={wrapperStyle} className="w-full aspect-video bg-black relative shadow-lg">
+              <div 
+                style={wrapperStyle} 
+                className="w-full aspect-video bg-black relative shadow-lg cursor-auto"
+                onMouseEnter={handleMouseEnterMedia} // ✨ 隐藏自定义鼠标
+                onMouseLeave={handleMouseLeaveMedia} // ✨ 恢复自定义鼠标
+              >
                 <ReactPlayer 
                   {...{
                     url: value.url,
@@ -122,12 +147,11 @@ export default function ProjectModal({ project, isOpen, onClose }: { project: an
                     playing: value.autoplay,
                     loop: value.autoplay,
                     muted: value.autoplay,
+                    config: { youtube: { playerVars: { showinfo: 1 } } },
                     onError: () => console.log('Video Load Error')
                   } as any}
                 />
-                <div className="absolute inset-0 flex items-center justify-center -z-10 text-gray-600 text-xs">
-                  Loading Video...
-                </div>
+                <div className="absolute inset-0 flex items-center justify-center -z-10 text-gray-600 text-xs">Loading Video...</div>
                 {value.caption && <p className="text-center text-sm text-gray-500 mt-2 italic">{value.caption}</p>}
               </div>
             );
@@ -135,7 +159,6 @@ export default function ProjectModal({ project, isOpen, onClose }: { project: an
           return null;
         }
       },
-
       block: {
         normal: ({children}: any) => <p className="mb-6 leading-relaxed text-gray-300">{children}</p>,
         normal_left: ({children}: any) => <p className="mb-6 leading-relaxed text-gray-300 text-left">{children}</p>,
@@ -149,7 +172,7 @@ export default function ProjectModal({ project, isOpen, onClose }: { project: an
         blockquote: ({children}: any) => <blockquote className="border-l-4 border-purple-500 pl-4 italic text-gray-400 my-8 bg-white/5 p-4 rounded-r text-left">{children}</blockquote>,
       }
     };
-  }, []); // 空依赖数组，只创建一次
+  }, []);
 
   return (
     <AnimatePresence>
@@ -177,13 +200,11 @@ export default function ProjectModal({ project, isOpen, onClose }: { project: an
 
                {project.content ? (
                  <div className="prose prose-invert prose-lg max-w-none text-center cursor-none">
-                   {/* 传递我们刚刚定义的 ptComponents */}
                    <PortableText value={project.content} components={ptComponents} />
                  </div>
                ) : (
                  <div className="text-center text-gray-500 py-20">No content details yet.</div>
                )}
-
             </div>
           </motion.div>
         </motion.div>
