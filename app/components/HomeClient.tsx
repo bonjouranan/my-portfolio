@@ -40,8 +40,8 @@ const THEME_CONFIG = {
   about: {
     subHeadlineColor: "#9435e9", subHeadlineSize: "0.8rem", subHeadlineWeight: 700,
     nameColor: "#ffffff", nameSize: "60px", nameWeight: 900,
-    roleColor: "#ffffff", roleSize: "60px", roleWeight: 900,
-    bodyColor: "#a3a3a3", bodySize: "1.5rem", bodyWeight: 300,
+    roleColor: "#ffffffff", roleSize: "60px", roleWeight: 900,
+    bodyColor: "#cececeff", bodySize: "1.6rem", bodyWeight: 500,
     skillColor: "#cacaca", skillBorder: "#383838ff", skillBorderWidth: "1px",
     skillHoverBg: "#ffffff", skillHoverText: "#000000", skillWeight: 600,
   }
@@ -94,8 +94,8 @@ export default function HomeClient({ allProjects, profile, heroConfig }: any) {
       {/* 背景组件 */}
       <div className="fixed inset-0 z-0">
         <ColorBends 
-          brightness={0.25} speed={0.25} scale={0.6} frequency={1.01}
-          warpStrength={1.01} noise={0.2} rotation={0} autoRotate={5}
+          brightness={0.2} speed={0.25} scale={0.6} frequency={1.01}
+          warpStrength={1.01} noise={0.4} rotation={0} autoRotate={5}
           mouseInfluence={0.5} parallax={0.1}
         />
       </div>
@@ -183,10 +183,10 @@ export default function HomeClient({ allProjects, profile, heroConfig }: any) {
       </section>
 
       {/* ABOUT Section 修改版 */}
-      <section id="about" className="py-32 px-4 md:px-12 max-w-[1600px] mx-auto relative z-10">
+      <section id="about" className="py-24 px-4 md:px-12 max-w-[1600px] mx-auto relative z-10">
            {/* 1. 标题单独触发 */}
            <FadeIn forceShow={skipIntro}>
-             <SectionHeader title="@ABOUT" rightContent={profile?.subHeadline || "WHO IS ANAN?"} />
+             <SectionHeader title="@ABOUT" rightContent={profile?.subHeadline || "AN?"} />
            </FadeIn>
 
            <div className="max-w-4xl mx-auto text-center">
@@ -217,7 +217,7 @@ export default function HomeClient({ allProjects, profile, heroConfig }: any) {
       </section>
 
 
-      <section id="contact" className="py-32 pb-64 md:pb-48 px-4 md:px-12 max-w-[1600px] mx-auto flex flex-col justify-center relative z-10">
+      <section id="contact" className="py-24 pb-64 md:pb-48 px-4 md:px-12 max-w-[1600px] mx-auto flex flex-col justify-center relative z-10">
         <FadeIn forceShow={skipIntro}>
           <SectionHeader title="@CONTACT" rightContent="LINK." />
           <div className="flex flex-col items-center w-full">
@@ -226,15 +226,15 @@ export default function HomeClient({ allProjects, profile, heroConfig }: any) {
                 <button onClick={() => setShowWechat(true)} className="group flex flex-col items-center gap-3">
                   <div className="relative p-5 border border-white/20 rounded-full bg-black group-hover:scale-110 group-hover:border-[#07c160] group-hover:text-[#07c160] transition-all duration-300">
                     <div className="absolute inset-0 rounded-full bg-[#07c160] blur-xl opacity-0 group-hover:opacity-40 transition-opacity duration-300"></div>
-                    <FaWeixin size={40} className="relative z-10" />
+                    <FaWeixin size={60} className="relative z-10" />
                   </div>
                   <span className="text-[10px] tracking-widest text-gray-500 uppercase group-hover:text-white transition-colors">Wechat</span>
                 </button>
               )}
-              {profile?.socials?.behance && <SocialIcon href={profile.socials.behance} icon={<FaBehance size={40} />} label="Behance" hoverColor="#1769ff" />}
-              {profile?.socials?.xiaohongshu && <SocialIcon href={profile.socials.xiaohongshu} icon={<SiXiaohongshu size={40} />} label="Red" hoverColor="#ff2442" />}
-              {profile?.socials?.bilibili && <SocialIcon href={profile.socials.bilibili} icon={<FaBilibili size={40} />} label="Bilibili" hoverColor="#fb7299" />}
-              {profile?.socials?.email && <SocialIcon href={`mailto:${profile.socials.email}`} icon={<SiGmail size={40} />} label="Email" hoverColor="#ffffff" />}
+              {profile?.socials?.behance && <SocialIcon href={profile.socials.behance} icon={<FaBehance size={60} />} label="Behance" hoverColor="#1769ff" />}
+              {profile?.socials?.xiaohongshu && <SocialIcon href={profile.socials.xiaohongshu} icon={<SiXiaohongshu size={60} />} label="Red" hoverColor="#ff2442" />}
+              {profile?.socials?.bilibili && <SocialIcon href={profile.socials.bilibili} icon={<FaBilibili size={60} />} label="Bilibili" hoverColor="#fb7299" />}
+              {profile?.socials?.email && <SocialIcon href={`mailto:${profile.socials.email}`} icon={<SiGmail size={60} />} label="Email" hoverColor="#ffffff" />}
             </div>
           </div>
         </FadeIn>
