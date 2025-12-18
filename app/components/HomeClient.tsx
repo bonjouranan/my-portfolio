@@ -41,9 +41,9 @@ const THEME_CONFIG = {
     subHeadlineColor: "#9435e9", subHeadlineSize: "0.8rem", subHeadlineWeight: 700,
     nameColor: "#ffffff", nameSize: "60px", nameWeight: 900,
     roleColor: "#ffffffff", roleSize: "60px", roleWeight: 900,
-    bodyColor: "#cececeff", bodySize: "1.6rem", bodyWeight: 500,
-    skillColor: "#cacaca", skillBorder: "#383838ff", skillBorderWidth: "1px",
-    skillHoverBg: "#ffffff", skillHoverText: "#000000", skillWeight: 600,
+    bodyColor: "#cececeff", bodySize: "1.4rem", bodyWeight: 400,
+    skillColor: "#dadadaff", skillBorder: "#383838ff", skillBorderWidth: "1px",
+    skillHoverBg: "#ffffff", skillHoverText: "#000000", skillWeight: 400,
   }
 };
 
@@ -234,7 +234,7 @@ export default function HomeClient({ allProjects, profile, heroConfig }: any) {
               {profile?.socials?.behance && <SocialIcon href={profile.socials.behance} icon={<FaBehance size={60} />} label="Behance" hoverColor="#1769ff" />}
               {profile?.socials?.xiaohongshu && <SocialIcon href={profile.socials.xiaohongshu} icon={<SiXiaohongshu size={60} />} label="Red" hoverColor="#ff2442" />}
               {profile?.socials?.bilibili && <SocialIcon href={profile.socials.bilibili} icon={<FaBilibili size={60} />} label="Bilibili" hoverColor="#fb7299" />}
-              {profile?.socials?.email && <SocialIcon href={`mailto:${profile.socials.email}`} icon={<SiGmail size={60} />} label="Email" hoverColor="#ffffff" />}
+              {profile?.socials?.email && <SocialIcon href={`mailto:${profile.socials.email}`} icon={<SiGmail size={60} />} label="Email" hoverColor="#d9ff00ff" />}
             </div>
           </div>
         </FadeIn>
