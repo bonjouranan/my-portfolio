@@ -1,4 +1,5 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
@@ -24,9 +25,10 @@ export default function CustomCursor() {
 
   return (
     <>
-      {/* 1. 核心点 (hidden md:block 手机端隐藏) */}
+      {/* 1. 核心点 */}
+      {/* 注意：移除了 hidden md:block，改用 custom-cursor-part 类通过 CSS 精准控制 */}
       <motion.div
-        className="hidden md:block fixed top-0 left-0 rounded-full pointer-events-none z-[999999]"
+        className="custom-cursor-part fixed top-0 left-0 rounded-full pointer-events-none z-[999999]"
         animate={{
           x: mousePosition.x - (isHovering ? 5 : 10),
           y: mousePosition.y - (isHovering ? 5 : 10),
@@ -36,10 +38,10 @@ export default function CustomCursor() {
         }}
         transition={{ type: "tween", ease: "backOut", duration: 0.1 }}
       />
-
-      {/* 2. 扩散指引圈 (hidden md:block 手机端隐藏) */}
+      
+      {/* 2. 扩散指引圈 */}
       <motion.div
-        className="hidden md:block fixed top-0 left-0 rounded-full pointer-events-none z-[999998]"
+        className="custom-cursor-part fixed top-0 left-0 rounded-full pointer-events-none z-[999998]"
         style={{ borderWidth: '1px' }}
         animate={{
           x: mousePosition.x - (isHovering ? 40 : 10),

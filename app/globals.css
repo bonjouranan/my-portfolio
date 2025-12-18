@@ -1,4 +1,4 @@
-/* 📍 app/globals.css (更新后的完整代码) */
+/* 📍 app/globals.css (完美修复 iPad 触控问题版) */
 
 /* 👇 将新卡片的 CSS 样式导入到全局 */
 @import './components/TiltedCard.css';
@@ -7,15 +7,58 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 1. 强制隐藏所有元素的默认鼠标 (包括链接和按钮) */
-* {
-  cursor: none !important;
+/* =========================================
+   🖱️ 智能鼠标逻辑 (核心修复)
+   ========================================= */
+
+/* 默认状态：先隐藏自定义鼠标组件，防止闪烁 */
+.custom-cursor-part {
+    display: none;
 }
+
+/* 场景 A：电脑端 (支持精确指针) */
+/* 只有当设备主要是用鼠标/触控板操作时，才启用自定义鼠标 */
+@media (pointer: fine) {
+    /* 1. 隐藏系统默认光标 */
+    * {
+        cursor: none !important;
+    }
+    
+    /* 2. 显示你的自定义圆点 */
+    .custom-cursor-part {
+        display: block !important;
+    }
+}
+
+/* 场景 B：触摸端 (粗糙指针 - iPad/iPhone/安卓) */
+/* 只要是主要用手指点击的设备，强制销毁自定义鼠标 */
+@media (pointer: coarse) {
+    /* 1. 彻底隐藏自定义圆点 */
+    .custom-cursor-part {
+        display: none !important;
+        opacity: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* 2. 恢复系统默认行为 (防止点击后出现奇怪的残留光标) */
+    * {
+        cursor: auto !important;
+    }
+
+    /* 3. 移除点击高亮色 (可选优化) */
+    * {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* =========================================
+   🎨 其他全局样式
+   ========================================= */
 
 /* 自定义滚动条 */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #050505; }
-::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: #8a8a8a; border-radius: 0px; }
 ::-webkit-scrollbar-thumb:hover { background: #7c3aed; }
 
 @layer utilities {
@@ -27,23 +70,15 @@
 
 body.no-scroll { overflow: hidden; }
 
-/* 滚动锚点偏移 (防止被导航栏遮挡) */
+/* 滚动锚点偏移 */
 html {
-  scroll-padding-top: 120px; /* 根据导航栏高度调整 */
+  scroll-padding-top: 120px; 
 }
 
-/* ...之前的代码... */
-/* 强制给后台页面恢复鼠标 */
-body:has(div[id="sanity"]) {
-  cursor: auto !important;
-}
-
-/* 或者更粗暴一点：只要路径包含 studio 的时候，body 就会有 cursor-auto 类 */
-.cursor-auto {
-  cursor: auto !important;
-}
-
-/* 确保后台里的所有元素都能看到鼠标 */
+/* 强制给后台页面 (Sanity Studio) 恢复鼠标 */
+/* 这里的优先级很高，会覆盖上面的 cursor: none */
+body:has(div[id="sanity"]),
+.cursor-auto,
 .cursor-auto * {
   cursor: auto !important;
 }
