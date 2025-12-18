@@ -1,4 +1,5 @@
 'use client';
+
 import { motion } from 'framer-motion';
 
 interface SectionHeaderProps {
@@ -14,10 +15,9 @@ export default function SectionHeader({ title, rightContent, fullWidth = true }:
   return (
     <div className={`relative mb-24 ${fullWidth ? 'w-full' : ''}`}>
       
-      {/* 👇 修改点：改为 flex-col (移动端竖排) md:flex-row (电脑端横排)，增加 gap 防止贴脸 */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between pb-4 gap-6">
+      {/* 👇 修正点：改回 flex-row (横向)，去掉 flex-col，保证移动端也是左右两端对齐 */}
+      <div className="flex flex-row items-end justify-between pb-4">
         
-        {/* 👇 修改点：增加 flex-shrink-0 防止标题被压缩 */}
         <h2 className="leading-none flex flex-shrink-0">
           {letters.map((char, index) => (
             <span
@@ -53,7 +53,7 @@ export default function SectionHeader({ title, rightContent, fullWidth = true }:
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.5, duration: 0.8 }}
-            className="uppercase pb-1 text-[#9ca3af] text-sm font-normal tracking-[0.1em]"
+            className="uppercase pb-1 text-[#9ca3af] text-sm font-normal tracking-[0.1em] text-right"
           >
             {rightContent}
           </motion.div>
