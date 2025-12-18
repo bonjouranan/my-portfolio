@@ -1,5 +1,4 @@
 'use client';
-
 import { motion } from 'framer-motion';
 
 interface SectionHeaderProps {
@@ -15,27 +14,24 @@ export default function SectionHeader({ title, rightContent, fullWidth = true }:
   return (
     <div className={`relative mb-24 ${fullWidth ? 'w-full' : ''}`}>
       
-      <div className="flex items-end justify-between pb-4">
+      {/* 👇 修改点：改为 flex-col (移动端竖排) md:flex-row (电脑端横排)，增加 gap 防止贴脸 */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between pb-4 gap-6">
         
-        <h2 className="leading-none flex">
+        {/* 👇 修改点：增加 flex-shrink-0 防止标题被压缩 */}
+        <h2 className="leading-none flex flex-shrink-0">
           {letters.map((char, index) => (
-            // 1. “遮罩” span 结构：这是实现可靠裁剪动画的基石
             <span
               key={index}
               className="inline-block overflow-hidden"
               style={{
-                // 2. 将字体样式放在“遮罩”上，给它一个稳定的高度
                 fontSize: "clamp(36px, 5vw, 60px)", 
                 fontWeight: 700,
-                lineHeight: 1, // 强制高度等于字体大小，极其重要！
+                lineHeight: 1, 
                 color: "#ffffff",
               }}
             >
               <motion.span
                 className="inline-block"
-                // 👇 【最终的核心修正】
-                // 我们保留 y 轴的位移，但移除初始的 rotate
-                // 这让字母可以垂直、干净地滑入，避免被旋转后的“包围盒”裁切
                 initial={{ y: "100%", opacity: 0 }}
                 whileInView={{ y: 0, opacity: 1 }}
                 viewport={{ once: true }}

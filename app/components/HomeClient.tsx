@@ -129,7 +129,7 @@ export default function HomeClient({ allProjects, profile, heroConfig }: any) {
         <div className="relative z-20 text-center pointer-events-auto mix-blend-difference">
           <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: START_DELAY + 0.2, duration: 1, ease: "circOut" }} className="h-[1px] w-24 bg-gray-600 mx-auto mb-6 origin-center" whileHover={{ width: 100, height: 2, background: "linear-gradient(90deg, #ff0000, #00ff00, #0000ff)" }}></motion.div>
           <div className="mb-4">
-            <PlayfulText text={heroConfig?.topSmallText || "@Ver.1.04      2024-2025   "} delay={START_DELAY + 0.6} className="text-sm md:text-base tracking-[0.5em] text-gray-400 justify-center" isHollow={false} isTitle={false} />
+            <PlayfulText text={heroConfig?.topSmallText || "@Ver.1.05      2024-2025   "} delay={START_DELAY + 0.6} className="text-sm md:text-base tracking-[0.5em] text-gray-400 justify-center" isHollow={false} isTitle={false} />
           </div>
           <div className="text-[14vw] md:text-[10vw] leading-[0.9] font-black tracking-tighter cursor-default flex flex-col items-center">
             <PlayfulText text={heroConfig?.line1 || "ANAN’S"} delay={START_DELAY + 0.2} isTitle={true} />
@@ -240,7 +240,7 @@ export default function HomeClient({ allProjects, profile, heroConfig }: any) {
         </FadeIn>
         <div className="absolute bottom-8 left-0 w-full flex flex-col items-center justify-center gap-2 px-4 text-center z-20 pointer-events-none">
           <p className="text-[10px] md:text-xs text-gray-500 uppercase tracking-widest font-medium">© 2025 ANAN DESIGN. ALL RIGHTS RESERVED.</p>
-          <p className="text-[10px] md:text-xs text-gray-600 uppercase tracking-widest opacity-80">Version 1.04 - 25.12.16</p>
+          <p className="text-[10px] md:text-xs text-gray-600 uppercase tracking-widest opacity-80">Version 1.05 - 25.12.18</p>
         </div>
       </section>
 

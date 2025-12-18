@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image'; // ✅ 使用 Next Image
+import Image from 'next/image'; 
 import ProjectModal from '../components/ProjectModal';
 import BottomGlow from '../components/BottomGlow'; 
 import { MdArrowOutward } from "react-icons/md";
@@ -12,7 +12,7 @@ export default function WorksClient({ initialWorks }: { initialWorks: any[] }) {
   const [categories, setCategories] = useState(['ALL']);
   const [activeCategory, setActiveCategory] = useState('ALL');
   const [selectedProject, setSelectedProject] = useState<any>(null);
-  const [allWorks, setAllWorks] = useState<any[]>(initialWorks); // 直接使用初始数据
+  const [allWorks, setAllWorks] = useState<any[]>(initialWorks); 
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -33,10 +33,13 @@ export default function WorksClient({ initialWorks }: { initialWorks: any[] }) {
       
       <div className="pt-24 md:pt-40 px-4 md:px-12 max-w-[1800px] mx-auto">
         <div className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
-          <h1 className="text-4xl md:text-8xl font-black uppercase tracking-tighter break-words max-w-full">
-            ALL WORKS
+          
+          {/* 👇 修改点：强制两行显示，leading-none 让行间距更紧凑好看 */}
+          <h1 className="text-4xl md:text-8xl font-black uppercase tracking-tighter leading-none flex-shrink-0">
+            ALL<br />WORKS
           </h1>
-          <div className="flex flex-wrap gap-4">
+
+          <div className="flex flex-wrap gap-4 md:justify-end">
             {categories.map(cat => (
               <button
                 key={cat}
@@ -67,7 +70,6 @@ export default function WorksClient({ initialWorks }: { initialWorks: any[] }) {
               >
                 {/* 使用 Behance 标准比例 808/632 */}
                 <div className="relative overflow-hidden aspect-[808/632] mb-4 bg-gray-900 border border-white/10 group-hover:border-white transition-colors duration-300">
-                  {/* ✅ Next Image 替换 img */}
                   <Image 
                     src={item.img} 
                     alt={item.title} 
